@@ -13,10 +13,12 @@
     "@glittr-sdk/sdk": "*",
     "bitcoinjs-lib": "^6.1.5",
     "ecpair": "^2.1.0",
+    "ora": "^8.1.0",
     "regtest-client": "^0.2.1"
   },
   "devDependencies": {
     "@glittr-sdk/eslint-config": "*",
-    "@glittr-sdk/typescript-config": "*"
+    "@glittr-sdk/typescript-config": "*",
+    "@types/ora": "^3.2.0"
   }
 }

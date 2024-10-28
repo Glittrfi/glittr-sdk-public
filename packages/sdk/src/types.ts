@@ -1,10 +1,10 @@
 export type Network = "regtest" | "testnet" | "mainnet";
 
-type BlockHeight = number;
-type BlockTxTuple = [number, number];
-type Ratio = number;
-type BitcoinAddress = string;
-type OutPoint = string; // Define based on your Rust struct if it's a complex structure
+export type BlockHeight = number;
+export type BlockTxTuple = [number, number];
+export type Ratio = number;
+export type BitcoinAddress = string;
+export type OutPoint = string; // Define based on your Rust struct if it's a complex structure
 
 interface AssetContractFreeMint {
     supply_cap?: number;
@@ -19,57 +19,57 @@ interface AssetContractPurchaseBurnSwap {
     transfer_ratio_type: TransferRatioType;
 }
 
-type AssetContract =
+export type AssetContract =
     | { type: "preallocated"; todo?: null }
     | { type: "free_mint"; supply_cap?: number; amount_per_mint: number; divisibility: number; live_time: BlockHeight }
     | { type: "purchase_burn_swap"; purchaseBurnSwap: AssetContractPurchaseBurnSwap };
 
-type InputAsset = 
+export type InputAsset = 
     | { type: "raw_btc" }
     | { type: "glittr_asset"; value: BlockTxTuple }
     | { type: "metaprotocol" };
 
-type TransferScheme =
+export type TransferScheme =
     | { type: "purchase"; address: BitcoinAddress }
     | { type: "burn" };
 
-interface OracleSetting {
+export interface OracleSetting {
     asset_id?: string;
 }
 
-type TransferRatioType =
+export type TransferRatioType =
     | { type: "fixed"; ratio: Ratio }
     | { type: "oracle"; pubkey: Uint8Array; setting: OracleSetting };
 
-type ContractType = { type: "asset"; assetContract: AssetContract };
+export type ContractType = { type: "asset"; assetContract: AssetContract };
 
-type CallType =
+export type CallType =
     | { type: "mint"; mintOption: MintOption }
     | { type: "burn" }
     | { type: "swap" };
 
-interface MintOption {
+export interface MintOption {
     pointer: number;
     oracle_message?: OracleMessageSigned;
 }
 
-interface OracleMessageSigned {
+export interface OracleMessageSigned {
     signature: Uint8Array;
     message: OracleMessage;
 }
 
-interface OracleMessage {
+export interface OracleMessage {
     input_outpoint: OutPoint;
     min_in_value: bigint;
     out_value: bigint;
     asset_id?: string;
 }
 
-type TxType = 
+export type TxType = 
     | { type: "transfer"; asset: BlockTxTuple; n_outputs: number; amounts: number[] }
     | { type: "contract_creation"; contractType: ContractType }
     | { type: "contract_call"; contract: BlockTxTuple; callType: CallType };
 
-interface OpReturnMessage {
+export interface OpReturnMessage {
     tx_type: TxType;
 }
