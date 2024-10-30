@@ -13,39 +13,40 @@ interface OracleMessageSigned {
   message: OracleMessage;
 }
 
-interface AssetContractPurchaseBurnSwap {
-  input_asset: InputAsset;
-  transfer_scheme: TransferScheme;
-  transfer_ratio_type: TransferRatioType;
-}
-
 type InputAsset =
   | { type: "raw_btc" }
   | { type: "glittr_asset"; value: BlockTxTuple }
   | { type: "metaprotocol" };
 
-export type AssetContract =
-  | { type: "preallocated"; todo?: null }
-  | {
-      type: "free_mint";
-      supply_cap?: number;
-      amount_per_mint: number;
-      divisibility: number;
-      live_time: BlockHeight;
-    }
-  | {
-      type: "purchase_burn_swap";
-      purchaseBurnSwap: AssetContractPurchaseBurnSwap;
-    };
+export type AssetContractFreeMint = {
+  supply_cap?: number;
+  amount_per_mint: number;
+  divisibility: number;
+  live_time: BlockHeight;
+};
 
-export type ContractType = { type: "asset"; assetContract: AssetContract };
+export type AssetContractPurchaseBurnSwap = {
+  input_asset: InputAsset;
+  transfer_scheme: TransferScheme;
+  transfer_ratio_type: TransferRatioType;
+};
+
+export type ContractType =
+  | { type: "preallocated"; asset: {} }
+  | { type: "free_mint"; asset: AssetContractFreeMint }
+  | { type: "purchase_burn_swap"; asset: AssetContractPurchaseBurnSwap };
 
 export interface MintOption {
   pointer: number;
   oracle_message?: OracleMessageSigned;
 }
 
-export type CallType =
-  | { type: "mint"; mintOption: MintOption }
-  | { type: "burn" }
-  | { type: "swap" };
+export type CallType = 
+| { mint: MintOption }
+| { burn: {} }
+| { swap: {} }
+
+// export type CallType =
+//   | { type: "mint"; mintOption: MintOption }
+//   | { type: "burn" }
+//   | { type: "swap" };
