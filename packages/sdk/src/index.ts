@@ -66,9 +66,9 @@ export class TransactionBuilder {
     };
   }
 
-  static createPurchaseBurnSwapContract() {} // TODO
+  // static createPurchaseBurnSwapContract() {} // TODO
 
-  static createPreAllocatedContract() {} // TODO
+  // static createPreAllocatedContract() {} // TODO
 
   static buildMessage(m: OpReturnMessage) {
     const { tx_type } = m;
