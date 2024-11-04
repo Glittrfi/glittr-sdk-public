@@ -1,7 +1,8 @@
 import { initEccLib, networks, payments, Psbt, script } from "bitcoinjs-lib";
 import ECPairFactory, { ECPairInterface } from "ecpair";
 import ecc from "@bitcoinerlab/secp256k1";
-import { TransactionBuilder, Utxo } from "@glittr-sdk/sdk";
+import { OpReturnMessage, TransactionBuilder, Utxo } from "@glittr-sdk/sdk";
+import * as readline from "readline";
 
 initEccLib(ecc);
 
@@ -9,10 +10,9 @@ const ELECTRUM_API = "http://192.145.44.30:3000";
 const GLITTR_API = "http://192.145.44.30:3001";
 
 function encodeGlittrData(message: string): Buffer {
-  const glittrFlag = Buffer.from("GLITTR", "utf8"); // Prefix
+  const glittrFlag = Buffer.from("GLITTR", "utf8");
   const glittrData = Buffer.from(message, "utf8");
   const embed = script.compile([106, glittrFlag, glittrData]);
-
   return embed;
 }
 
@@ -24,10 +24,9 @@ async function getUtxo(address: string): Promise<Utxo> {
   );
   const utxo = confirmedUtxos[0];
   if (!utxo) {
-    console.error(`Error No UTXO`);
+    console.error(`Error: No UTXO`);
     process.exit(1);
   }
-
   return utxo;
 }
 
@@ -35,10 +34,9 @@ async function getTxHex(txId: string): Promise<string> {
   const txHexFetch = await fetch(`${ELECTRUM_API}/tx/${txId}/hex`);
   const txHex = await txHexFetch.text();
   if (!txHex) {
-    console.error(`Error No TX Hex`);
+    console.error(`Error: No TX Hex`);
     process.exit(1);
   }
-
   return txHex;
 }
 
@@ -71,35 +69,33 @@ function generatePsbtHex(
 
   psbt.finalizeAllInputs();
   const hex = psbt.extractTransaction(true).toHex();
-
   return hex;
 }
 
-async function main() {
-  const ecpair = ECPairFactory(ecc);
-  const kp = ecpair.fromWIF(
-    "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj", // bcrt1p909annaahk007276ny6ldnp2d7svjzx68249ptkcp45tptang5dqpjwerv
-    networks.regtest
-  );
+async function contractCreation(
+  keypair: ECPairInterface,
+  validator: any,
+  supplyCap: number,
+  amountPerMint: number,
+  divisibility: number,
+  liveTime: number
+) {
   const payment = payments["p2pkh"]({
-    pubkey: kp.publicKey,
+    pubkey: keypair.publicKey,
     network: networks.regtest,
   });
-  const validator = (pubkey: any, msghash: any, signature: any): boolean =>
-    ecpair.fromPublicKey(pubkey).verify(msghash, signature);
 
-  // Contract Creation Section
   const t = TransactionBuilder.freeMintContractInstantiate({
-    supplyCap: 2000,
-    amountPerMint: 2,
-    divisibilty: 18,
-    liveTime: 0,
+    supplyCap,
+    amountPerMint,
+    divisibilty: divisibility,
+    liveTime,
   });
   const embed = encodeGlittrData(JSON.stringify(t));
   const utxo = await getUtxo(payment.address!);
   const txHex = await getTxHex(utxo.txid);
   const hex = generatePsbtHex(
-    kp,
+    keypair,
     payment.address!,
     embed,
     utxo,
@@ -107,7 +103,42 @@ async function main() {
     validator
   );
 
-  // Validate tx
+  await broadcastTransaction(hex, "Contract Creation");
+}
+
+async function mint(
+  keypair: ECPairInterface,
+  validator: any,
+  contractId: string,
+  pointer: number
+) {
+  const payment = payments["p2pkh"]({
+    pubkey: keypair.publicKey,
+    network: networks.regtest,
+  });
+
+  const [block, tx] = contractId.split(":");
+  const m = TransactionBuilder.mint({
+    contractId: [parseInt(block!), parseInt(tx!)],
+    pointer,
+  });
+
+  const embedMint = encodeGlittrData(JSON.stringify(m));
+  const utxoMint = await getUtxo(payment.address!);
+  const txHexMint = await getTxHex(utxoMint.txid);
+  const hexMint = generatePsbtHex(
+    keypair,
+    payment.address!,
+    embedMint,
+    utxoMint,
+    txHexMint,
+    validator
+  );
+
+  await broadcastTransaction(hexMint, "Mint");
+}
+
+async function broadcastTransaction(hex: string, operation: string) {
   const validateFetch = await fetch(`${GLITTR_API}/validate-tx`, {
     method: "POST",
     headers: { "Content-Type": " text-plain" },
@@ -122,7 +153,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Broadcast tx
   const txIdFetch = await fetch(`${ELECTRUM_API}/tx`, {
     method: "POST",
     headers: { "Content-Type": "text-plain" },
@@ -133,8 +163,8 @@ async function main() {
     process.exit(1);
   }
   const txId = await txIdFetch.text();
+  console.log(`✅ ${operation} Transaction Broadcasted Successfully : ${txId}`);
 
-  console.log("✅ Transaction Broadcasted Successfully");
   const { default: ora } = await import("ora");
   const spinner = ora("Waiting for Glittr indexer . . .").start();
 
@@ -166,52 +196,61 @@ async function main() {
     console.error(`Error : Transaction data not found`);
     process.exit(1);
   }
+}
 
-  // Mint Section
-  const m = TransactionBuilder.mint({
-    contractId: txData?.block_tx.split(":"),
-    pointer: 0,
+async function getUserInput(prompt: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
   });
-  const embedMint = encodeGlittrData(JSON.stringify(m));
-  const utxoMint = await getUtxo(payment.address!);
-  const txHexMint = await getTxHex(utxoMint.txid);
-  const hexMint = generatePsbtHex(
-    kp,
-    payment.address!,
-    embedMint,
-    utxoMint,
-    txHexMint,
-    validator
+
+  return new Promise((resolve) => {
+    rl.question(prompt, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+}
+
+async function main() {
+  const ecpair = ECPairFactory(ecc);
+  const kp = ecpair.fromWIF(
+    "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
+    networks.regtest
   );
-  // Validate tx
-  const validateFetchMint = await fetch(`${GLITTR_API}/validate-tx`, {
-    method: "POST",
-    headers: { "Content-Type": " text-plain" },
-    body: hexMint,
-  });
-  if (!validateFetchMint.ok) {
-    console.error(`Fetch validate tx error ${validateFetchMint.statusText} `);
-  }
-  const validateTxMint = await validateFetchMint.json();
-  if (!validateTxMint?.is_valid) {
-    console.error(`Error : ${validateTxMint?.msg ?? "Tx invalid"}`);
-    process.exit(1);
-  }
+  const validator = (pubkey: any, msghash: any, signature: any): boolean =>
+    ecpair.fromPublicKey(pubkey).verify(msghash, signature);
 
-  // Broadcast tx
-  const txIdFetchMint = await fetch(`${ELECTRUM_API}/tx`, {
-    method: "POST",
-    headers: { "Content-Type": "text-plain" },
-    body: hex,
-  });
-  if (!txIdFetchMint.ok) {
-    console.error(
-      `Error : Broadcasting transaction ${txIdFetchMint.statusText}`
+  const operation = await getUserInput(
+    "Choose an operation (1: Contract Creation, 2: Mint): "
+  );
+
+  if (operation === "1") {
+    const supplyCap = parseInt(await getUserInput("Enter Supply Cap: "));
+    const amountPerMint = parseInt(
+      await getUserInput("Enter Amount Per Mint: ")
     );
-    process.exit(1);
+    const divisibility = parseInt(await getUserInput("Enter Divisibility: "));
+    const liveTime = parseInt(await getUserInput("Enter Live Time: "));
+
+    await contractCreation(
+      kp,
+      validator,
+      supplyCap,
+      amountPerMint,
+      divisibility,
+      liveTime
+    );
+  } else if (operation === "2") {
+    const contractId = await getUserInput(
+      "Enter Contract ID (format: 87081:1): "
+    );
+    const pointer = parseInt(await getUserInput("Enter Pointer: "));
+
+    await mint(kp, validator, contractId, pointer);
+  } else {
+    console.log("Invalid choice.");
   }
-  const txIdMint = await txIdFetchMint.text();
-  console.log(txIdMint);
 }
 
 main();
