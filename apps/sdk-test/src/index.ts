@@ -252,7 +252,7 @@ async function main() {
     console.log("Invalid choice.");
   }
 }
-main();
+// main();
 
 async function manualMessage() {
   const ecpair = ECPairFactory(ecc);
@@ -309,4 +309,5 @@ async function manualMessage() {
   console.log(JSON.stringify(caA));
   console.log(JSON.stringify(caBuild) === JSON.stringify(caA));
 }
-// manualMessage();
+
+main();
