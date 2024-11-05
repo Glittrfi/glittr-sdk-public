@@ -1,7 +1,10 @@
 {
   "name": "@glittr-sdk/sdk",
-  "version": "0.0.2",
+  "version": "0.7.0",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
