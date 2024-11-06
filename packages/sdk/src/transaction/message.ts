@@ -1,3 +1,13 @@
+export type TransferFormat = {
+  tx_type: {
+    transfer: {
+      asset: string;
+      n_outputs: number;
+      amounts: number[];
+    };
+  };
+};
+
 export type MintFormat = {
   tx_type: {
     contract_call: {
@@ -28,12 +38,7 @@ export type FreeMintContractInstantiateFormat = {
   };
 };
 
-export type TransferFormat = {
-  tx_type: {
-    transfer: {
-      asset: string;
-      n_outputs: number;
-      amounts: number[];
-    };
-  };
-};
+export type TransactionFormat =
+  | MintFormat
+  | TransferFormat
+  | FreeMintContractInstantiateFormat;
