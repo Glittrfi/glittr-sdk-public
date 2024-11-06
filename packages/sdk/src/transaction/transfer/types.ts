@@ -1,5 +1,7 @@
-export type TransferParams = {
-  asset: string;
-  nOutput: number;
-  amounts: number[];
+import { BlockTxTuple, U128 } from "../../utils";
+
+export type TxTypeTransfer = {
+  asset: BlockTxTuple;
+  output: number;
+  amount: U128;
 };

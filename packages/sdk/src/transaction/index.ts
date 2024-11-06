@@ -1,32 +1,39 @@
-import { FreeMintContractParams, MintContractCallParams } from "./types";
-import { TransferParams } from "./transfer/types";
 import { OpReturnMessage } from "./types";
+import {
+  FreeMintContractInstantiateFormat,
+  FreeMintContractParams,
+  MintContractCallFormat,
+  MintContractCallParams,
+  PreallocatedContractFormat,
+  PreallocatedContractParams,
+  PurchaseBurnContractFormat,
+  PurchaseBurnContractParams,
+  TransferFormat,
+  TransferParams,
+} from "./message";
 export class TransactionBuilder {
   constructor() {}
 
-  static transfer(params: TransferParams) {
+  static transfer(params: TransferParams): TransferFormat {
     return {
-      tx_type: {
-        transfer: {
-          asset: params.asset,
-          n_outputs: params.nOutput,
-          amounts: params.amounts,
-        },
+      transfer: {
+        transfers: params.transfers,
       },
     };
   }
 
-  static freeMintContractInstantiate(params: FreeMintContractParams) {
+  static freeMintContractInstantiate(
+    params: FreeMintContractParams
+  ): FreeMintContractInstantiateFormat {
     return {
-      tx_type: {
-        contract_creation: {
-          contract_type: {
-            asset: {
+      contract_creation: {
+        contract_type: {
+          asset: {
+            asset: params.simple_asset,
+            distribution_schemes: {
               free_mint: {
-                amount_per_mint: params.amountPerMint,
-                divisibility: params.divisibilty,
-                live_time: params.liveTime,
-                supply_cap: params.supplyCap,
+                amount_per_mint: params.amount_per_mint,
+                supply_cap: params.simple_asset.supply_cap,
               },
             },
           },
@@ -35,14 +42,17 @@ export class TransactionBuilder {
     };
   }
 
-  static mint(params: MintContractCallParams) {
+  static preallocatedContractInstantiate(
+    params: PreallocatedContractParams
+  ): PreallocatedContractFormat {
     return {
-      tx_type: {
-        contract_call: {
-          contract: params.contractId,
-          call_type: {
-            mint: {
-              pointer: params.pointer,
+      contract_creation: {
+        contract_type: {
+          asset: {
+            asset: params.simple_asset,
+            distribution_schemes: {
+              preallocated: params.preallocated,
+              free_mint: params.free_mint,
             },
           },
         },
@@ -50,48 +60,40 @@ export class TransactionBuilder {
     };
   }
 
-  // static createPurchaseBurnSwapContract() {} // TODO
 
-  // static createPreAllocatedContract() {} // TODO
+  static purchaseBurnSwapContractInstantiate(
+    params: PurchaseBurnContractParams
+  ): PurchaseBurnContractFormat {
+    return {
+      contract_creation: {
+        contract_type: {
+          asset: {
+            asset: params.simple_asset,
+            distribution_schemes: {
+              purchase: params.purchase_burn_swap
+            },
+          },
+        },
+      },
+    };
+  }
+
+  static mint(params: MintContractCallParams): MintContractCallFormat {
+    return {
+      contract_call: {
+        contract: params.contract,
+        call_type: {
+          mint: {
+            pointer: params.pointer,
+            oracle_message: params.oracle_message,
+          },
+        },
+      },
+    };
+  }
 
   static buildMessage(m: OpReturnMessage) {
-    const { tx_type } = m;
-
-    switch (tx_type.type) {
-      case "transfer":
-        return {
-          tx_type: {
-            transfer: {
-              asset: tx_type.asset,
-              n_outputs: tx_type.n_outputs,
-              amounts: tx_type.amounts,
-            },
-          },
-        };
-      case "contract_creation":
-        const contractType = tx_type.contractType.type;
-        const contractAsset = tx_type.contractType.asset;
-        return {
-          tx_type: {
-            contract_creation: {
-              contract_type: {
-                asset: {
-                  [contractType]: contractAsset,
-                },
-              },
-            },
-          },
-        };
-      case "contract_call":
-        return {
-          tx_type: {
-            contract_call: {
-              contract: tx_type.contract,
-              call_type: tx_type.callType,
-            },
-          },
-        };
-    }
+    return m;
   }
 }
 

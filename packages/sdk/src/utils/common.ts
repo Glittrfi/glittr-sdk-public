@@ -1,5 +1,13 @@
 export type BlockHeight = number;
 export type BlockTxTuple = [number, number];
-export type Ratio = number;
+export type Ratio = [number, number];
 export type BitcoinAddress = string;
-export type OutPoint = string;
+export type OutPointStr = string;
+export type RelativeOrAbsoluteBlockHeight = number;
+
+export type U128 = string; // Using string to handle large numbers safely
+export type Pubkey = string;
+export type OutPoint = {
+  txid: string;
+  vout: number;
+};
