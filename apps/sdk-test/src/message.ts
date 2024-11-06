@@ -1,4 +1,4 @@
-import { OpReturnMessage, TransactionBuilder, Utxo } from "@glittr-sdk/sdk";
+import { OpReturnMessage, TransactionBuilder, BitcoinUTXO } from "@glittr-sdk/sdk";
 
 async function manualMessage() {
   /**
