@@ -9,9 +9,9 @@ import {
 } from "../../utils";
 
 export type InputAsset =
-  | { raw_btc: {} }
+  | "raw_btc"
   | { glittr_asset: BlockTxTuple }
-  | { metaprotocol: {} };
+  | "metaprotocol"
 
 // Update TransferScheme enum
 export type TransferScheme = { purchase: BitcoinAddress } | { burn: {} };
