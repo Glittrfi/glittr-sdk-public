@@ -3,7 +3,7 @@ import {
   BlockTxTuple,
   GlittrSDK,
   Ratio,
-  TransactionBuilder,
+  txBuilder,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
@@ -69,7 +69,7 @@ async function createContract() {
     [[25, 100], -4], // 25% unlocked after 4 blocks
   ];
 
-  const tx = TransactionBuilder.preallocatedContractInstantiate({
+  const tx = txBuilder.preallocatedContractInstantiate({
     simple_asset: {
       supply_cap: 1000n.toString(),
       divisibility: 100,
@@ -104,7 +104,7 @@ async function createContract() {
 async function vestedMint() {
   const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
-  const tx = TransactionBuilder.mint({
+  const tx = txBuilder.mint({
     contract,
     pointer: 0, // 1 is op_return, 0 is specified, last is remainder
   });
@@ -121,7 +121,7 @@ async function vestedMint() {
 async function freeMint() {
   const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
-  const tx = TransactionBuilder.mint({
+  const tx = txBuilder.mint({
     contract,
     pointer: 0, // 1 is op_return, 0 is specified, last is remainder
   });

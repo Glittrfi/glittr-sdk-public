@@ -72,8 +72,8 @@ export class GlittrSDK {
   async createAndBroadcastTx({
     account,
     tx,
-    utxos,
     outputs,
+    utxos,
   }: CreateBroadcastTxParams) {
     const addressType = getAddressType(account.address);
 

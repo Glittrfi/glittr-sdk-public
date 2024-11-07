@@ -1,7 +1,7 @@
 import { initEccLib, networks, payments, Psbt, script } from "bitcoinjs-lib";
 import ECPairFactory, { ECPairInterface } from "ecpair";
 import ecc from "@bitcoinerlab/secp256k1";
-import { TransactionBuilder, BitcoinUTXO } from "@glittr-sdk/sdk";
+import { txBuilder, BitcoinUTXO } from "@glittr-sdk/sdk";
 
 initEccLib(ecc);
 
@@ -90,7 +90,7 @@ async function main() {
     ecpair.fromPublicKey(pubkey).verify(msghash, signature);
 
   // Contract Creation Section
-  const t = TransactionBuilder.freeMintContractInstantiate({
+  const t = txBuilder.freeMintContractInstantiate({
     simple_asset: {
       supply_cap: 2000n.toString(),
       divisibility: 18,
@@ -171,7 +171,7 @@ async function main() {
   }
 
   // Mint Section
-  const m = TransactionBuilder.mint({
+  const m = txBuilder.mint({
     contract: [parseInt(txData?.block_tx.split(":")[0]), parseInt(txData?.block_tx.split(":")[1])],
     pointer: 1,
   });

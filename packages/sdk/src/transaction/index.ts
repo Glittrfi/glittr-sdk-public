@@ -11,7 +11,7 @@ import {
   TransferFormat,
   TransferParams,
 } from "./message";
-export class TransactionBuilder {
+export class txBuilder {
   constructor() {}
 
   static transfer(params: TransferParams): TransferFormat {

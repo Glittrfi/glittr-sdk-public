@@ -1,4 +1,4 @@
-import { Account, GlittrSDK, TransactionBuilder } from "@glittr-sdk/sdk";
+import { Account, GlittrSDK, txBuilder } from "@glittr-sdk/sdk";
 
 async function main() {
   const NETWORK = "regtest";
@@ -13,7 +13,7 @@ async function main() {
     network: NETWORK,
   });
 
-  const tx = TransactionBuilder.freeMintContractInstantiate({
+  const c = txBuilder.freeMintContractInstantiate({
     simple_asset: {
       supply_cap: 2000n.toString(),
       divisibility: 18,
@@ -24,8 +24,8 @@ async function main() {
 
   const txid = await client.createAndBroadcastTx({
     account: account.p2pkh(),
-    tx,
-    outputs: [{ address: account.p2wpkh().address, value: 1000 }],
+    tx: c,
+    outputs: []
   });
   console.log("TXID : ", txid);
 }

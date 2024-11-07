@@ -5,7 +5,7 @@ import {
   GlittrSDK,
   OutPoint,
   Ratio,
-  TransactionBuilder,
+  txBuilder,
 } from "@glittr-sdk/sdk";
 import {
   OracleMessage,
@@ -74,7 +74,7 @@ async function createContract() {
   ///
   const creatorBitcoinAddress = creatorAccount.p2pkh().address;
 
-  const tx = TransactionBuilder.purchaseBurnSwapContractInstantiate({
+  const tx = txBuilder.purchaseBurnSwapContractInstantiate({
     simple_asset: {
       divisibility: 1,
       live_time: 0,
@@ -140,7 +140,7 @@ async function mint() {
     message: oracleMessage,
   };
 
-  const tx = TransactionBuilder.mint({
+  const tx = txBuilder.mint({
     contract,
     pointer: 0, // 1 is op_return, 0 is specified, last is remainder
     oracle_message: oracleSignedMessage,
