@@ -13,7 +13,7 @@ async function main() {
     network: NETWORK,
   });
 
-  const tx = txBuilder.freeMintContractInstantiate({
+  const c = txBuilder.freeMintContractInstantiate({
     simple_asset: {
       supply_cap: 2000n.toString(),
       divisibility: 18,
@@ -24,7 +24,7 @@ async function main() {
 
   const txid = await client.createAndBroadcastTx({
     account: account.p2pkh(),
-    tx,
+    tx: c,
     outputs: []
   });
   console.log("TXID : ", txid);
