@@ -6,7 +6,7 @@ export type OutPointStr = string;
 export type RelativeOrAbsoluteBlockHeight = number;
 
 export type U128 = string; // Using string to handle large numbers safely
-export type Pubkey = Uint8Array;
+export type Pubkey = number[];
 export type OutPoint = {
   txid: string;
   vout: number;
