@@ -1,4 +1,4 @@
-import { OpReturnMessage, TransactionBuilder, BitcoinUTXO } from "@glittr-sdk/sdk";
+import { OpReturnMessage, txBuilder } from "@glittr-sdk/sdk";
 
 async function manualMessage() {
   /**
@@ -23,10 +23,10 @@ async function manualMessage() {
       },
     },
   };
-  const tBuild = TransactionBuilder.buildMessage(t);
+  const tBuild = txBuilder.buildMessage(t);
   console.log(JSON.stringify(tBuild));
 
-  const tA = TransactionBuilder.freeMintContractInstantiate({
+  const tA = txBuilder.freeMintContractInstantiate({
     simple_asset: {
       supply_cap: 2000n.toString(),
       divisibility: 18,
@@ -46,10 +46,10 @@ async function manualMessage() {
       call_type: { mint: { pointer: 0 } },
     },
   };
-  const caBuild = TransactionBuilder.buildMessage(ca);
+  const caBuild = txBuilder.buildMessage(ca);
   console.log(JSON.stringify(caBuild));
 
-  const caA = TransactionBuilder.mint({ contract: [100, 0], pointer: 0 });
+  const caA = txBuilder.mint({ contract: [100, 0], pointer: 0 });
   console.log(JSON.stringify(caA));
   console.log(JSON.stringify(caBuild) === JSON.stringify(caA));
 }
