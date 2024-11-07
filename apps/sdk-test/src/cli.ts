@@ -1,7 +1,7 @@
 import { initEccLib, networks, payments, Psbt, script } from "bitcoinjs-lib";
 import ECPairFactory, { ECPairInterface } from "ecpair";
 import ecc from "@bitcoinerlab/secp256k1";
-import { OpReturnMessage, TransactionBuilder, Utxo } from "@glittr-sdk/sdk";
+import { TransactionBuilder, BitcoinUTXO } from "@glittr-sdk/sdk";
 import * as readline from "readline";
 
 initEccLib(ecc);
@@ -16,7 +16,7 @@ function encodeGlittrData(message: string): Buffer {
   return embed;
 }
 
-async function getUtxo(address: string): Promise<Utxo> {
+async function getUtxo(address: string): Promise<BitcoinUTXO> {
   const utxosFetch = await fetch(`${ELECTRUM_API}/address/${address}/utxo`);
   const utxos = (await utxosFetch.json()) ?? [];
   const confirmedUtxos = utxos.filter(
@@ -44,7 +44,7 @@ function generatePsbtHex(
   keypair: ECPairInterface,
   address: string,
   embed: Buffer,
-  utxo: Utxo,
+  utxo: BitcoinUTXO,
   txHex: string,
   validator: (pubkey: any, msghash: any, signature: any) => boolean
 ): string {
@@ -75,8 +75,8 @@ function generatePsbtHex(
 async function contractCreation(
   keypair: ECPairInterface,
   validator: any,
-  supplyCap: number,
-  amountPerMint: number,
+  supplyCap: bigint,
+  amountPerMint: bigint,
   divisibility: number,
   liveTime: number
 ) {
@@ -86,10 +86,12 @@ async function contractCreation(
   });
 
   const t = TransactionBuilder.freeMintContractInstantiate({
-    supplyCap,
-    amountPerMint,
-    divisibilty: divisibility,
-    liveTime,
+    simple_asset: {
+      supply_cap: supplyCap.toString(),
+      divisibility,
+      live_time: liveTime,
+    },
+    amount_per_mint: amountPerMint.toString(),
   });
   const embed = encodeGlittrData(JSON.stringify(t));
   const utxo = await getUtxo(payment.address!);
@@ -119,7 +121,7 @@ async function mint(
 
   const [block, tx] = contractId.split(":");
   const m = TransactionBuilder.mint({
-    contractId: [parseInt(block!), parseInt(tx!)],
+    contract: [parseInt(block!), parseInt(tx!)],
     pointer,
   });
 
@@ -236,8 +238,8 @@ async function main() {
     await contractCreation(
       kp,
       validator,
-      supplyCap,
-      amountPerMint,
+      BigInt(supplyCap),
+      BigInt(amountPerMint),
       divisibility,
       liveTime
     );

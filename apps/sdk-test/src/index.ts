@@ -5,8 +5,9 @@ import { TransactionBuilder, BitcoinUTXO } from "@glittr-sdk/sdk";
 
 initEccLib(ecc);
 
-const ELECTRUM_API = "http://192.145.44.30:3000";
-const GLITTR_API = "http://192.145.44.30:3001";
+const ELECTRUM_API = "https://devnet-electrum.glittr.fi"
+const GLITTR_API = "https://devnet-core-api.glittr.fi"
+const EXPLORER_URL = "https://explorer.glittr.fi"
 
 function encodeGlittrData(message: string): Buffer {
   const glittrFlag = Buffer.from("GLITTR", "utf8"); // Prefix
@@ -90,10 +91,12 @@ async function main() {
 
   // Contract Creation Section
   const t = TransactionBuilder.freeMintContractInstantiate({
-    supplyCap: 2000,
-    amountPerMint: 2,
-    divisibilty: 18,
-    liveTime: 0,
+    simple_asset: {
+      supply_cap: 2000n.toString(),
+      divisibility: 18,
+      live_time: 0,
+    },
+    amount_per_mint: 2n.toString(),
   });
   const embed = encodeGlittrData(JSON.stringify(t));
   const utxo = await getUtxo(payment.address!);
@@ -134,7 +137,7 @@ async function main() {
   }
   const txId = await txIdFetch.text();
 
-  console.log("✅ Transaction Broadcasted Successfully");
+  console.log(`✅ Transaction Broadcasted Successfully (${EXPLORER_URL}/tx/${txId})`);
   const { default: ora } = await import("ora");
   const spinner = ora("Waiting for Glittr indexer . . .").start();
 
@@ -169,8 +172,8 @@ async function main() {
 
   // Mint Section
   const m = TransactionBuilder.mint({
-    contractId: txData?.block_tx.split(":"),
-    pointer: 0,
+    contract: [parseInt(txData?.block_tx.split(":")[0]), parseInt(txData?.block_tx.split(":")[1])],
+    pointer: 1,
   });
   const embedMint = encodeGlittrData(JSON.stringify(m));
   const utxoMint = await getUtxo(payment.address!);
@@ -202,7 +205,7 @@ async function main() {
   const txIdFetchMint = await fetch(`${ELECTRUM_API}/tx`, {
     method: "POST",
     headers: { "Content-Type": "text-plain" },
-    body: hex,
+    body: hexMint,
   });
   if (!txIdFetchMint.ok) {
     console.error(
