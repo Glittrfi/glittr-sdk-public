@@ -87,7 +87,8 @@ export class GlittrSDK {
       1,
       account.address,
       this.getUtxos,
-      this.getTxHex
+      this.getTxHex,
+      account.address
     );
 
     const _inputs = coins?.inputs ?? [];
@@ -129,7 +130,6 @@ export class GlittrSDK {
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
-
     // Validate Glittr TX
     const isValidGlittrTx = await fetchPOST(
       `${this.glittrApi}/validate-tx`,
@@ -138,13 +138,12 @@ export class GlittrSDK {
     );
     if (!isValidGlittrTx) throw new Error(`Glittr Error: TX Invalid`);
 
-
     // Broadcast TX
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
       { "Content-Type": "application/json" },
       hex
     );
-    return txId
+    return txId;
   }
 }
