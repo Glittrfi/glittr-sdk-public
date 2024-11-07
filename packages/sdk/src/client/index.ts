@@ -78,16 +78,18 @@ export class GlittrSDK {
     const addressType = getAddressType(account.address);
 
     const embed = encodeGlittrData(JSON.stringify(tx));
+    console.log(embed)
     outputs = outputs.concat({ script: embed, value: 0 });
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
       utxos ?? [],
       outputs,
-      1,
+      2,
       account.address,
       this.getUtxos,
-      this.getTxHex
+      this.getTxHex,
+      account.address
     );
 
     const _inputs = coins?.inputs ?? [];
@@ -136,8 +138,9 @@ export class GlittrSDK {
       { "Content-Type": "application/json" },
       hex
     );
-    if (!isValidGlittrTx) throw new Error(`Glittr Error: TX Invalid`);
-
+    console.log(JSON.stringify(tx));
+    console.log(isValidGlittrTx);
+    if (!isValidGlittrTx.is_valid) throw new Error(`Glittr Error: TX Invalid`);
 
     // Broadcast TX
     const txId = await fetchPOST(

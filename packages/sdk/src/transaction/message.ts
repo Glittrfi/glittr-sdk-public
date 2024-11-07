@@ -97,4 +97,6 @@ export type PurchaseBurnContractParams = {
 export type TransactionFormat =
   | MintContractCallFormat
   | TransferFormat
+  | PreallocatedContractFormat
+  | PurchaseBurnContractFormat
   | FreeMintContractInstantiateFormat;
