@@ -72,19 +72,19 @@ export class GlittrSDK {
   async createAndBroadcastTx({
     account,
     tx,
-    utxos,
     outputs,
+    utxos,
   }: CreateBroadcastTxParams) {
     const addressType = getAddressType(account.address);
 
     const embed = encodeGlittrData(JSON.stringify(tx));
-    outputs = outputs.concat({ script: embed, value: 0 });
+    outputs = outputs.concat({ script: embed, value: 600 });
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
       utxos ?? [],
       outputs,
-      1,
+      1, // TODO change this
       account.address,
       this.getUtxos,
       this.getTxHex,
