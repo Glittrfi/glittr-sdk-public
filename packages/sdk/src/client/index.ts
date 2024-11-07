@@ -78,7 +78,6 @@ export class GlittrSDK {
     const addressType = getAddressType(account.address);
 
     const embed = encodeGlittrData(JSON.stringify(tx));
-    console.log(embed)
     outputs = outputs.concat({ script: embed, value: 0 });
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -137,8 +136,6 @@ export class GlittrSDK {
       { "Content-Type": "application/json" },
       hex
     );
-    console.log(JSON.stringify(tx));
-    console.log(isValidGlittrTx);
     if (!isValidGlittrTx.is_valid) throw new Error(`Glittr Error: TX Invalid`);
 
     // Broadcast TX
