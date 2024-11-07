@@ -32,6 +32,7 @@ export class Account {
     this.network = network;
   }
 
+
   p2pkh(): P2pkhAccount {
     const p2pkhPayments = payments.p2pkh({
       pubkey: this.keypair.publicKey,

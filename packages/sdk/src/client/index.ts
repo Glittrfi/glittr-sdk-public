@@ -84,7 +84,7 @@ export class GlittrSDK {
     const coins = await coinSelect(
       utxos ?? [],
       outputs,
-      1, // TODO change this
+      2,
       account.address,
       this.getUtxos,
       this.getTxHex,
@@ -136,7 +136,7 @@ export class GlittrSDK {
       { "Content-Type": "application/json" },
       hex
     );
-    if (!isValidGlittrTx) throw new Error(`Glittr Error: TX Invalid`);
+    if (!isValidGlittrTx.is_valid) throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
 
     // Broadcast TX
     const txId = await fetchPOST(

@@ -1,15 +1,16 @@
-import { OutPoint, U128 } from "../../utils";
+import { OutPoint, Ratio, U128 } from "../../utils";
 
 export type OracleMessage = {
-  input_outpoint: OutPoint;
-  min_in_value: U128;
-  out_value: U128;
+  input_outpoint?: OutPoint;
+  min_in_value?: U128;
+  out_value?: U128;
   asset_id?: string;
+  ratio?: Ratio;
   block_height: number;
 };
 
 export type OracleMessageSigned = {
-  signature: Uint8Array;
+  signature: number[];
   message: OracleMessage;
 };
 

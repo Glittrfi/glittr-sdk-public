@@ -6,8 +6,9 @@ export async function fetchPOST(url: string, headers: any, body: any) {
       headers,
       body,
     });
-    
-    if (!resFetch.ok) throw new Error(`Error POST on : ${url}`);
+
+    if (!resFetch.ok)
+      throw new Error(`Error POST on : ${url} ${await resFetch.text()}`);
 
     // Get the content type from headers
     const contentType = resFetch.headers.get("content-type");
