@@ -136,7 +136,7 @@ export class GlittrSDK {
       { "Content-Type": "application/json" },
       hex
     );
-    if (!isValidGlittrTx.is_valid) throw new Error(`Glittr Error: TX Invalid`);
+    if (!isValidGlittrTx.is_valid) throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
 
     // Broadcast TX
     const txId = await fetchPOST(
