@@ -102,7 +102,10 @@ export async function coinSelect(
     (outputs.reduce((prev, output) => prev + output.value!, 0) +
       feeAfterExtraOutput);
 
-  if (changeOutputAddress && remainderAfterExtraOutput > dustThreshold(feeRate)) {
+  if (
+    changeOutputAddress &&
+    remainderAfterExtraOutput > dustThreshold(feeRate)
+  ) {
     outputs.push({
       address: changeOutputAddress,
       value: remainderAfterExtraOutput,
