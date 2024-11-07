@@ -1,7 +1,7 @@
 import { initEccLib, networks, payments, Psbt, script } from "bitcoinjs-lib";
 import ECPairFactory, { ECPairInterface } from "ecpair";
 import ecc from "@bitcoinerlab/secp256k1";
-import { TransactionBuilder, Utxo } from "@glittr-sdk/sdk";
+import { TransactionBuilder, BitcoinUTXO } from "@glittr-sdk/sdk";
 import * as readline from "readline";
 
 initEccLib(ecc);
@@ -16,7 +16,7 @@ function encodeGlittrData(message: string): Buffer {
   return embed;
 }
 
-async function getUtxo(address: string): Promise<Utxo> {
+async function getUtxo(address: string): Promise<BitcoinUTXO> {
   const utxosFetch = await fetch(`${ELECTRUM_API}/address/${address}/utxo`);
   const utxos = (await utxosFetch.json()) ?? [];
   const confirmedUtxos = utxos.filter(
@@ -44,7 +44,7 @@ function generatePsbtHex(
   keypair: ECPairInterface,
   address: string,
   embed: Buffer,
-  utxo: Utxo,
+  utxo: BitcoinUTXO,
   txHex: string,
   validator: (pubkey: any, msghash: any, signature: any) => boolean
 ): string {

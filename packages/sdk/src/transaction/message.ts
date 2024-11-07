@@ -94,3 +94,7 @@ export type PurchaseBurnContractParams = {
   simple_asset: SimpleAsset;
   purchase_burn_swap: PurchaseBurnSwap
 };
+export type TransactionFormat =
+  | MintContractCallFormat
+  | TransferFormat
+  | FreeMintContractInstantiateFormat;
