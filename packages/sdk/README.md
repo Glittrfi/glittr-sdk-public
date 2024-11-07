@@ -51,7 +51,7 @@ async function main() {
 main();
 ```
 
-APIs
+# APIs
 ## GlittrSDK
 ### Constructor
 
