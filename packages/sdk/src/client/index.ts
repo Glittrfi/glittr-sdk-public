@@ -78,7 +78,7 @@ export class GlittrSDK {
     const addressType = getAddressType(account.address);
 
     const embed = encodeGlittrData(JSON.stringify(tx));
-    outputs = outputs.concat({ script: embed, value: 600 });
+    outputs = outputs.concat({ script: embed, value: 0 });
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
