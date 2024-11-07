@@ -1,33 +1,38 @@
-import { Account, GlittrSDK, Ratio, TransactionBuilder } from "@glittr-sdk/sdk";
+import {
+  Account,
+  BlockTxTuple,
+  GlittrSDK,
+  Ratio,
+  TransactionBuilder,
+} from "@glittr-sdk/sdk";
 
-async function main() {
-  const NETWORK = "regtest";
+const NETWORK = "regtest";
+const client = new GlittrSDK({
+  network: NETWORK,
+  glittrApi: "https://devnet-core-api.glittr.fi",
+  electrumApi: "https://devnet-electrum.glittr.fi",
+});
 
-  const client = new GlittrSDK({
-    network: NETWORK,
-    glittrApi: "https://devnet-core-api.glittr.fi",
-    electrumApi: "https://devnet-electrum.glittr.fi",
-  });
+const account = new Account({
+  wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
+  network: NETWORK,
+});
 
-  const account = new Account({
-    wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
-    network: NETWORK,
-  });
+const reserveAccount = new Account({
+  wif: "cMqUkLHLtHJ4gSBdxAVtgFjMnHkUi5ZXkrsoBcpECGrE2tcJiNDh",
+  network: NETWORK,
+});
 
-  const reserveAccount = new Account({
-    wif: "cMqUkLHLtHJ4gSBdxAVtgFjMnHkUi5ZXkrsoBcpECGrE2tcJiNDh",
-    network: NETWORK,
-  });
+const freeMintAccount = new Account({
+  wif: "cTAxMkLUFE9YfQKgycwimpYoFp1KqqmFYZGboD3inKgucoREotpp",
+  network: NETWORK,
+});
 
-  const freeMintAccount = new Account({
-    wif: "cTAxMkLUFE9YfQKgycwimpYoFp1KqqmFYZGboD3inKgucoREotpp",
-    network: NETWORK,
-  });
+console.log(`User account ${account.p2pkh().address}`);
+console.log(`Reserve account ${reserveAccount.p2pkh().address}`);
+console.log(`Freemint account ${freeMintAccount.p2pkh().address}`);
 
-  console.log(`User account ${account.p2pkh().address}`);
-  console.log(`Reserve account ${reserveAccount.p2pkh().address}`);
-  console.log(`Freemint account ${freeMintAccount.p2pkh().address}`);
-
+async function createContract() {
   // Example: pre-allocation with free mint
   // {
   // TxType: Contract,
@@ -50,10 +55,12 @@ async function main() {
   // },
   // }
 
-  const receiver1PublicKey = new Uint8Array(account.p2pkh().keypair.publicKey);
-  const receiver2PublicKey = new Uint8Array(reserveAccount.p2pkh().keypair.publicKey);
+  const receiver1PublicKey = Array.from(account.p2pkh().keypair.publicKey);
+  const receiver2PublicKey = Array.from(
+    reserveAccount.p2pkh().keypair.publicKey
+  );
 
-  console.log(receiver1PublicKey, receiver2PublicKey)
+  console.log(receiver1PublicKey, receiver2PublicKey);
 
   const quarterlyVesting: [Ratio, number][] = [
     [[25, 100], -1], // 25% unlocked after 1 blocks
@@ -83,6 +90,7 @@ async function main() {
       amount_per_mint: 1n.toString(),
     },
   });
+  console.log(JSON.stringify(tx));
 
   const txid = await client.createAndBroadcastTx({
     account: account.p2pkh(),
@@ -90,7 +98,63 @@ async function main() {
     outputs: [{ address: account.p2pkh().address, value: 546 }],
   });
 
-  console.log("TXID : ", txid);
+  console.log(`TX: https://explorer.glittr.fi/tx/${txid}`);
 }
 
-main();
+async function vestedMint() {
+  const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
+
+  const tx = TransactionBuilder.mint({
+    contract,
+    pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+  });
+
+  const txid = await client.createAndBroadcastTx({
+    account: reserveAccount.p2pkh(),
+    tx,
+    outputs: [{ address: reserveAccount.p2pkh().address, value: 546 }],
+  });
+
+  console.log(`TX: https://explorer.glittr.fi/tx/${txid}`);
+}
+
+async function freeMint() {
+  const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
+
+  const tx = TransactionBuilder.mint({
+    contract,
+    pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+  });
+
+  const txid = await client.createAndBroadcastTx({
+    account: freeMintAccount.p2pkh(),
+    tx,
+    outputs: [{ address: freeMintAccount.p2pkh().address, value: 546 }],
+  });
+
+  console.log(`TX: https://explorer.glittr.fi/tx/${txid}`);
+}
+
+async function checkingAssetFreeMint() {
+  const assetTxId =
+    "22acf70357c3adf8c3236e1c230b7c3d6796488825b963edd0d52ff13ba5a822";
+  const vout = 0;
+  const result = await fetch(
+    `https://devnet-core-api.glittr.fi/assets/${assetTxId}/${vout}`
+  );
+
+  console.log(await result.text());
+}
+
+async function checkingAssetVested() {
+  const assetTxId =
+    "82eda96aa5f9a0941b2b0f00b692aa389f54b210af23977f21e0006259f3282b";
+  const vout = 0;
+  const result = await fetch(
+    `https://devnet-core-api.glittr.fi/assets/${assetTxId}/${vout}`
+  );
+
+  console.log(await result.text());
+}
+
+checkingAssetVested();
