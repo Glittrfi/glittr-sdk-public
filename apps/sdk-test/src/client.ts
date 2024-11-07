@@ -5,8 +5,8 @@ async function main() {
 
   const client = new GlittrSDK({
     network: NETWORK,
-    glittrApi: "http://192.145.44.30:3001",
-    electrumApi: "http://192.145.44.30:3000",
+    electrumApi: "https://devnet-electrum.glittr.fi",
+    glittrApi: "https://devnet-core-api.glittr.fi",
   });
   const account = new Account({
     wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
@@ -25,7 +25,7 @@ async function main() {
   const txid = await client.createAndBroadcastTx({
     account: account.p2pkh(),
     tx,
-    outputs: [{ address: account.p2wpkh().address, value: 0 }],
+    outputs: [{ address: account.p2wpkh().address, value: 1000 }],
   });
   console.log("TXID : ", txid);
 }

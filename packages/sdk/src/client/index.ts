@@ -131,7 +131,6 @@ export class GlittrSDK {
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
-
     // Validate Glittr TX
     const isValidGlittrTx = await fetchPOST(
       `${this.glittrApi}/validate-tx`,
@@ -148,6 +147,6 @@ export class GlittrSDK {
       { "Content-Type": "application/json" },
       hex
     );
-    return txId
+    return txId;
   }
 }

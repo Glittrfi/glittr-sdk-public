@@ -10,9 +10,13 @@ export async function fetchPOST(url: string, headers: any, body: any) {
     if (!resFetch.ok)
       throw new Error(`Error fetching on : ${url} ${await resFetch.text()}`);
 
-    try {
+    // Get the content type from headers
+    const contentType = resFetch.headers.get("content-type");
+    
+    // Clone the response before reading it
+    if (contentType && contentType.includes("application/json")) {
       return await resFetch.json();
-    } catch (_) {
+    } else {
       return await resFetch.text();
     }
   } catch (e) {
