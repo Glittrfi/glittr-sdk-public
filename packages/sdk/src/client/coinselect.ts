@@ -3,6 +3,11 @@ import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
 import { payments, Psbt } from "bitcoinjs-lib";
 import { getBitcoinNetwork } from "../utils";
+import {
+  MintContractCallFormat,
+  TransactionFormat,
+  TransferFormat,
+} from "../transaction";
 
 export const FEE_TX_EMPTY_SIZE = 4 + 1 + 1 + 4;
 
@@ -26,13 +31,19 @@ function _sumValues(data: BitcoinUTXO[] | Output[]) {
   return data.reduce((prev, input) => prev + (input.value || 0), 0);
 }
 
+function _isTransferFormat(tx: TransactionFormat): tx is TransferFormat {
+  return (tx as TransferFormat).transfer !== undefined;
+}
+
 export async function coinSelect(
   inputs: BitcoinUTXO[],
   outputs: Output[],
   feeRate: number,
   address: string,
+  tx: TransactionFormat,
   getUtxos: (address: string) => Promise<BitcoinUTXO[]>,
   getTxHex: (txId: string) => Promise<string>,
+  getGlittrAsset: (txId: string, vout: number) => Promise<string>,
   changeOutputAddress?: string
 ) {
   let txBytes = transactionBytes(inputs, outputs);
@@ -49,18 +60,48 @@ export async function coinSelect(
 
   const utxos = await getUtxos(address);
 
+  // Separate UTXOs based on asset presence
+  const utxosGlittr: BitcoinUTXO[] = [];
+  const nonUtxosGlittr: BitcoinUTXO[] = [];
+
   for (const utxo of utxos) {
-    const utxoBytes = inputBytes(utxo);
-    const utxoFee = feeRate * utxoBytes;
-    const utxoValue = utxo.value;
+    const assetString = await getGlittrAsset(utxo.txid, utxo.vout);
+    const asset = JSON.parse(JSON.parse(assetString));
+    const assetIsEmpty =
+      !asset.assets ||
+      !asset.assets.list ||
+      Object.keys(asset.assets.list).length === 0;
 
-    if (utxoFee > utxoValue) continue;
+    assetIsEmpty ? nonUtxosGlittr.push(utxo) : utxosGlittr.push(utxo);
+  }
 
-    txBytes += utxoBytes;
-    totalInputValue += utxoValue;
-    inputs.push(utxo);
+  const addUtxosToInputs = (utxosList: BitcoinUTXO[], feeRate: number) => {
+    for (const utxo of utxosList) {
+      const utxoBytes = inputBytes(utxo);
+      const utxoFee = feeRate * utxoBytes;
+      const utxoValue = utxo.value;
 
-    if (totalInputValue < totalOutputValue + totalFee) continue;
+      if (utxoFee > utxoValue) continue;
+
+      txBytes += utxoBytes;
+      totalInputValue += utxoValue;
+      inputs.push(utxo);
+
+      if (totalInputValue >= totalOutputValue + totalFee) break;
+    }
+  };
+
+  if (_isTransferFormat(tx)) {
+    // Add UTXOs from utxosGlittr for transfer type
+    addUtxosToInputs(utxosGlittr, feeRate);
+
+    // If still not enough, add UTXOs from nonUtxosGlittr
+    if (totalInputValue < totalOutputValue + totalFee) {
+      addUtxosToInputs(nonUtxosGlittr, feeRate);
+    }
+  } else {
+    // Add UTXOs from nonUtxosGlittr for non-transfer type
+    addUtxosToInputs(nonUtxosGlittr, feeRate);
   }
 
   // Todo handle multiple utxo type in one array

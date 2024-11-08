@@ -1,10 +1,9 @@
 import { Psbt } from "bitcoinjs-lib";
 import { Account } from "../account/types";
-import { TransactionFormat } from "../transaction/message";
+import { TransactionFormat, TransferFormat } from "../transaction/message";
 import { Network } from "../types";
 import { BitcoinUTXO, Output } from "../utxo";
 import { coinSelect } from "./coinselect";
-import { PSBT } from "./psbt";
 import { getBitcoinNetwork, validator } from "../utils";
 import { getAddressType } from "../utils/address";
 import { AddressType } from "bitcoin-address-validation";
@@ -14,7 +13,7 @@ import { fetchPOST } from "../utils/fetch";
 export type CreateBroadcastTxParams = {
   account: Account;
   tx: TransactionFormat;
-  outputs: Output[];
+  outputs?: Output[];
   utxos?: BitcoinUTXO[];
 };
 
@@ -36,6 +35,7 @@ export class GlittrSDK {
 
     this.getUtxos = this.getUtxos.bind(this);
     this.getTxHex = this.getTxHex.bind(this);
+    this.getGlittrAsset = this.getGlittrAsset.bind(this);
   }
 
   private async getUtxos(address: string): Promise<BitcoinUTXO[]> {
@@ -66,6 +66,19 @@ export class GlittrSDK {
     }
   }
 
+  private async getGlittrAsset(txId: string, vout: number) {
+    try {
+      const assetFetch = await fetch(
+        `${this.glittrApi}/assets/${txId}/${vout}`
+      );
+      const asset = await assetFetch.text();
+
+      return JSON.stringify(asset);
+    } catch (e) {
+      throw new Error(`Error fetching Glittr Asset : ${e}`);
+    }
+  }
+
   createTx() {}
   broadcastTx() {}
 
@@ -75,6 +88,8 @@ export class GlittrSDK {
     outputs,
     utxos,
   }: CreateBroadcastTxParams) {
+    outputs = outputs ?? []
+
     const addressType = getAddressType(account.address);
 
     const embed = encodeGlittrData(JSON.stringify(tx));
@@ -86,8 +101,10 @@ export class GlittrSDK {
       outputs,
       2,
       account.address,
+      tx,
       this.getUtxos,
       this.getTxHex,
+      this.getGlittrAsset,
       account.address
     );
 
@@ -136,7 +153,8 @@ export class GlittrSDK {
       { "Content-Type": "application/json" },
       hex
     );
-    if (!isValidGlittrTx.is_valid) throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+    if (!isValidGlittrTx.is_valid)
+      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
 
     // Broadcast TX
     const txId = await fetchPOST(

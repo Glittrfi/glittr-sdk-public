@@ -99,3 +99,4 @@ export class txBuilder {
 
 export * from "../utxo";
 export * from "./types";
+export * from "./message"
