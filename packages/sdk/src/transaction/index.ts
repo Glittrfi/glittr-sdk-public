@@ -2,6 +2,8 @@ import { OpReturnMessage } from "./types";
 import {
   FreeMintContractInstantiateFormat,
   FreeMintContractParams,
+  GovernanceContractInstantiateFormat,
+  GovernanceContractParams,
   MintContractCallFormat,
   MintContractCallParams,
   PreallocatedContractFormat,
@@ -73,6 +75,18 @@ export class txBuilder {
               purchase: params.purchase_burn_swap
             },
           },
+        },
+      },
+    };
+  }
+
+  static governanceContractInstantiate(
+    params: GovernanceContractParams
+  ): GovernanceContractInstantiateFormat {
+    return {
+      contract_creation: {
+        contract_type: {
+          governance: params.governance,
         },
       },
     };
