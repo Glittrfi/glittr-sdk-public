@@ -7,6 +7,7 @@ import {
   SimpleAsset,
   VestingPlan,
 } from "./contract/asset";
+import { GovernanceContract } from "./contract/governance";
 import { TxTypeTransfer } from "./transfer/types";
 
 export type MintContractCallFormat = {
@@ -94,9 +95,25 @@ export type PurchaseBurnContractParams = {
   simple_asset: SimpleAsset;
   purchase_burn_swap: PurchaseBurnSwap
 };
+
+/**
+ * add message format and necessary function params for txBuilder 
+ */
+export type GovernanceContractInstantiateFormat = {
+  contract_creation: {
+    contract_type: {
+      governance: GovernanceContract
+    }
+  } 
+}
+export type GovernanceContractParams = {
+  governance: GovernanceContract
+}
+
 export type TransactionFormat =
   | MintContractCallFormat
   | TransferFormat
   | PreallocatedContractFormat
   | PurchaseBurnContractFormat
-  | FreeMintContractInstantiateFormat;
+  | FreeMintContractInstantiateFormat
+  | GovernanceContractInstantiateFormat;

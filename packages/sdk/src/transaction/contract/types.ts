@@ -1,5 +1,7 @@
 import { AssetContract } from "./asset";
+import { GovernanceContract } from "./governance";
 
 export type ContractType = {
-  asset: AssetContract;
+  asset?: AssetContract;
+  governance?: GovernanceContract
 };

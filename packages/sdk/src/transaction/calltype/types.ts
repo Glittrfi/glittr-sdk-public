@@ -1,4 +1,5 @@
-import { OutPoint, Ratio, U128 } from "../../utils";
+import { BlockTxTuple, OutPoint, Ratio, U128 } from "../../utils";
+import { ProposalCreation, Vote } from "./governance";
 
 export type OracleMessage = {
   input_outpoint?: OutPoint;
@@ -19,4 +20,11 @@ export type MintOption = {
   oracle_message?: OracleMessageSigned;
 };
 
-export type CallType = { mint: MintOption } | { burn: {} } | { swap: {} };
+export type CallType =
+  | { mint: MintOption }
+  | { burn: {} }
+  | { swap: {} }
+  | { create_proposal: ProposalCreation }
+  | { vote: Vote }
+  | { execute_proposal: BlockTxTuple }
+  | { VetoProposal: BlockTxTuple };
