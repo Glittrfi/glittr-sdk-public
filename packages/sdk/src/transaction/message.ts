@@ -2,6 +2,8 @@ import { BlockHeight, BlockTxTuple, Pubkey, U128 } from "../utils";
 import { MintOption, OracleMessageSigned } from "./calltype/types";
 import {
   FreeMint,
+  NFTMint,
+  NFTAsset,
   Preallocated,
   PurchaseBurnSwap,
   SimpleAsset,
@@ -28,9 +30,9 @@ export type FreeMintContractInstantiateFormat = {
   contract_creation: {
     contract_type: {
       asset: {
-        asset: SimpleAsset;
+        asset: NFTAsset;
         distribution_schemes: {
-          free_mint: FreeMint;
+          nft_mint: NFTMint;
         };
       };
     };
@@ -40,6 +42,14 @@ export type FreeMintContractInstantiateFormat = {
 export type FreeMintContractParams = {
   simple_asset: SimpleAsset;
   amount_per_mint: U128;
+};
+
+export type NFTMintContractParams = {
+  nft_asset: NFTAsset;
+  amount_per_mint: U128;
+  name: String;
+  url: String;
+  url_hash: String;
 };
 
 export type TransferFormat = {
