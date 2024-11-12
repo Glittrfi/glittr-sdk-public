@@ -43,6 +43,14 @@ export type FreeMint = {
   amount_per_mint: U128;
 };
 
+export type NFTMint = {
+  supply_cap?: U128;
+  amount_per_mint: U128;
+  name: String;
+  url: String;
+  url_hash: String;
+};
+
 export type VestingPlan =
   | { timelock: RelativeOrAbsoluteBlockHeight }
   | { scheduled: Array<[Ratio, RelativeOrAbsoluteBlockHeight]> };
@@ -64,10 +72,20 @@ export type SimpleAsset = {
   live_time: BlockHeight;
 };
 
+export type NFTAsset = {
+  supply_cap?: U128;
+  divisibility: number;
+  live_time: BlockHeight;
+  name: String;
+  url: String;
+  url_hash: String;
+};
+
 export type DistributionSchemes = {
   preallocated?: Preallocated;
   free_mint?: FreeMint;
   purchase?: PurchaseBurnSwap;
+  nft_mint?: NFTMint;
 };
 
 export type AssetContract = {

@@ -2,6 +2,7 @@ import { OpReturnMessage } from "./types";
 import {
   FreeMintContractInstantiateFormat,
   FreeMintContractParams,
+  NFTMintContractParams,
   MintContractCallFormat,
   MintContractCallParams,
   PreallocatedContractFormat,
@@ -23,17 +24,20 @@ export class txBuilder {
   }
 
   static freeMintContractInstantiate(
-    params: FreeMintContractParams
+    params: NFTMintContractParams
   ): FreeMintContractInstantiateFormat {
     return {
       contract_creation: {
         contract_type: {
           asset: {
-            asset: params.simple_asset,
+            asset: params.nft_asset,
             distribution_schemes: {
-              free_mint: {
+              nft_mint: {
                 amount_per_mint: params.amount_per_mint,
-                supply_cap: params.simple_asset.supply_cap,
+                supply_cap: params.nft_asset.supply_cap,
+                name: params.name,
+                url: params.url,
+                url_hash: params.url_hash,
               },
             },
           },
