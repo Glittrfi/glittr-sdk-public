@@ -1,11 +1,11 @@
 {
   "name": "@glittr-sdk/sdk",
-  "version": "0.17.0",
-  "private": true,
+  "version": "0.18.1",
+  "private": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -b ./tsconfig.build.json",
+    "build": "rm -rf dist && tsc -b ./tsconfig.build.json && browserify build.js -o ./dist/index.js -s glittr",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -14,8 +14,9 @@
     "bip39": "^3.1.0",
     "bitcoin-address-validation": "^2.2.3",
     "bitcoinjs-lib": "^6.1.5",
-    "ecpair": "^2.1.0",
-    "cross-fetch": "^4.0.0"
+    "browserify": "^17.0.1",
+    "cross-fetch": "^4.0.0",
+    "ecpair": "^2.1.0"
   },
   "devDependencies": {
     "@glittr-sdk/eslint-config": "*",
