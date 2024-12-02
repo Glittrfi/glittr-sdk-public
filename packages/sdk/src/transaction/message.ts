@@ -1,99 +1,94 @@
 import { BlockHeight, BlockTxTuple, Pubkey, U128 } from "../utils";
-import { MintOption, OracleMessageSigned } from "./calltype/types";
-import {
-  FreeMint,
-  Preallocated,
-  PurchaseBurnSwap,
-  SimpleAsset,
-  VestingPlan,
-} from "./contract/asset";
+import { MintBurnOption, OracleMessageSigned } from "./calltype/types";
+// import { MintOption, OracleMessageSigned } from "./calltype/types";
+import { MintOnlyAssetContract } from "./contract/moa";
+import { Preallocated, PurchaseBurnSwap } from "./shared";
 import { TxTypeTransfer } from "./transfer/types";
 
-export type MintContractCallFormat = {
-  contract_call: {
-    contract: BlockTxTuple;
-    call_type: {
-      mint: MintOption;
-    };
+
+/**
+ * Free Mint contract init
+ */
+export type FreeMintContractParams = {
+  amount_per_mint: U128;
+  divisibility: number;
+  live_time: BlockHeight;
+  supply_cap?: U128;
+  ticker?: string;
+};
+export type FreeMintContractInstantiateFormat = {
+  contract_creation: {
+    contract_type: { moa: MintOnlyAssetContract };
   };
 };
 
+
+/**
+ * Preallocated contract
+ */
+export type PreallocatedContractParams = {
+  preallocated: Preallocated;
+  divisibility: number;
+  live_time: BlockHeight;
+  supply_cap?: U128;
+  ticker?: string;
+};
+export type PreallocatedContractFormat = {
+  contract_creation: {
+    contract_type: { moa: MintOnlyAssetContract };
+  };
+};
+
+
+/**
+ * Purchaseburnswap contract
+ */
+export type PurchaseBurnContractParams = {
+  purchase_burn_swap: PurchaseBurnSwap;
+  divisibility: number;
+  live_time: BlockHeight;
+  supply_cap?: U128;
+  ticker?: string;
+};
+export type PurchaseBurnContractFormat = {
+  contract_creation: {
+    contract_type: { moa: MintOnlyAssetContract };
+  };
+};
+
+
+/**
+ * Mint contract call
+ */
 export type MintContractCallParams = {
   contract: BlockTxTuple;
   pointer: number;
   oracle_message?: OracleMessageSigned;
+  pointer_to_key?: number;
 };
-
-export type FreeMintContractInstantiateFormat = {
-  contract_creation: {
-    contract_type: {
-      asset: {
-        asset: SimpleAsset;
-        distribution_schemes: {
-          free_mint: FreeMint;
-        };
-      };
+export type MintContractCallFormat = {
+  contract_call: {
+    contract: BlockTxTuple;
+    call_type: {
+      mint: MintBurnOption;
     };
   };
 };
 
-export type FreeMintContractParams = {
-  simple_asset: SimpleAsset;
-  amount_per_mint: U128;
-};
 
+/**
+ * Transfer
+ */
+export type TransferParams = {
+  transfers: TxTypeTransfer[];
+};
 export type TransferFormat = {
   transfer: {
     transfers: TxTypeTransfer[];
   };
 };
 
-export type TransferParams = {
-  transfers: TxTypeTransfer[];
-};
 
-export type PreallocatedContractFormat = {
-  contract_creation: {
-    contract_type: {
-      asset: {
-        asset: SimpleAsset;
-        distribution_schemes: {
-          preallocated: Preallocated;
-          free_mint?: FreeMint;
-        };
-      };
-    };
-  };
-};
-
-export type PreallocatedContractParams = {
-  simple_asset: SimpleAsset;
-  preallocated: Preallocated;
-
-  // free mint
-  free_mint?: {
-    supply_cap?: U128;
-    amount_per_mint: U128;
-  };
-};
-
-export type PurchaseBurnContractFormat = {
-  contract_creation: {
-    contract_type: {
-      asset: {
-        asset: SimpleAsset;
-        distribution_schemes: {
-          purchase: PurchaseBurnSwap
-        };
-      };
-    };
-  };
-};
-
-export type PurchaseBurnContractParams = {
-  simple_asset: SimpleAsset;
-  purchase_burn_swap: PurchaseBurnSwap
-};
 export type TransactionFormat =
   | MintContractCallFormat
   | TransferFormat

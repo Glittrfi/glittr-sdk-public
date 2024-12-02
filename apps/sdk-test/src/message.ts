@@ -7,13 +7,11 @@ async function manualMessage() {
   const t: OpReturnMessage = {
     contract_creation: {
       contract_type: {
-        asset: {
-          asset: {
-            supply_cap: 2000n.toString(),
-            divisibility: 18,
-            live_time: 0,
-          },
-          distribution_schemes: {
+        moa: {
+          supply_cap: 2000n.toString(),
+          divisibility: 18,
+          live_time: 0,
+          mint_mechanism: {
             free_mint: {
               supply_cap: 2000n.toString(),
               amount_per_mint: 10n.toString(),
@@ -27,12 +25,10 @@ async function manualMessage() {
   console.log(JSON.stringify(tBuild));
 
   const tA = txBuilder.freeMintContractInstantiate({
-    simple_asset: {
-      supply_cap: 2000n.toString(),
-      divisibility: 18,
-      live_time: 0,
-    },
     amount_per_mint: 10n.toString(),
+    divisibility: 18,
+    live_time: 0,
+    supply_cap: 2000n.toString(),
   });
   console.log(JSON.stringify(tA));
   console.log(JSON.stringify(tBuild) === JSON.stringify(tA));

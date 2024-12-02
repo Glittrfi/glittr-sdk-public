@@ -31,12 +31,10 @@ async function main() {
   });
 
   const c = txBuilder.freeMintContractInstantiate({
-    simple_asset: {
-      supply_cap: 2000n.toString(),
-      divisibility: 18,
-      live_time: 0,
-    },
     amount_per_mint: 2n.toString(),
+    divisibility: 18,
+    live_time: 0,
+    supply_cap: 2000n.toString(),
   });
 
   const txid = await client.createAndBroadcastTx({

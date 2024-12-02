@@ -1,5 +1,5 @@
 {
-  "name": "@glittr-sdk/cli-tests",
+  "name": "@glittr-sdk/sdk-test",
   "version": "0.0.11",
   "private": true,
   "main": "./dist/index.js",
@@ -16,8 +16,8 @@
     "regtest-client": "^0.2.1"
   },
   "devDependencies": {
-    "@glittr-sdk/sdk": "*",
     "@glittr-sdk/eslint-config": "*",
+    "@glittr-sdk/sdk": "*",
     "@glittr-sdk/typescript-config": "*",
     "@types/ora": "^3.2.0"
   }

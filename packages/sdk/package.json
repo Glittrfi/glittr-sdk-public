@@ -1,11 +1,14 @@
 {
   "name": "@glittr-sdk/sdk",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc -b ./tsconfig.build.json && browserify build.js -o ./dist/index.js -s glittr",
+    "build": "tsc -b ./tsconfig.build.json",
     "clean": "rm -rf dist"
   },
   "dependencies": {

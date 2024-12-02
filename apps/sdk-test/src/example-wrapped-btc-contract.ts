@@ -1,10 +1,4 @@
-import {
-  Account,
-  BlockTxTuple,
-  GlittrSDK,
-  Ratio,
-  txBuilder,
-} from "@glittr-sdk/sdk";
+import { Account, BlockTxTuple, GlittrSDK, txBuilder } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
 const client = new GlittrSDK({
@@ -44,15 +38,12 @@ async function createContract() {
   const creatorBitcoinAddress = creatorAccount.p2pkh().address;
 
   const tx = txBuilder.purchaseBurnSwapContractInstantiate({
-    simple_asset: {
-      supply_cap: 21000000n.toString(),
-      divisibility: 8,
-      live_time: 0,
-    },
+    divisibility: 8,
+    live_time: 0,
+    supply_cap: 21000000n.toString(),
     purchase_burn_swap: {
       input_asset: "raw_btc",
-      transfer_scheme: { purchase: creatorBitcoinAddress },
-      transfer_ratio_type: { fixed: { ratio: [1, 1] } }, // 1:1 ratio
+      ratio: { fixed: { ratio: [1, 1] } }, // 1:1 ratio
     },
   });
 
@@ -88,7 +79,7 @@ async function mint() {
 
 async function checkingAsset() {
   const assetTxId =
-    "a320545261eb503ba305ebaf3e7bcaa7534c905b91b03a51759cf8e8128808de"
+    "a320545261eb503ba305ebaf3e7bcaa7534c905b91b03a51759cf8e8128808de";
   const vout = 0;
   const result = await fetch(
     `https://devnet-core-api.glittr.fi/assets/${assetTxId}/${vout}`
@@ -96,6 +87,5 @@ async function checkingAsset() {
 
   console.log(await result.text());
 }
-
 
 checkingAsset();

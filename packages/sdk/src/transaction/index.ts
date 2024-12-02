@@ -28,12 +28,15 @@ export class txBuilder {
     return {
       contract_creation: {
         contract_type: {
-          asset: {
-            asset: params.simple_asset,
-            distribution_schemes: {
+          moa: {
+            ticker: params.ticker,
+            supply_cap: params.supply_cap,
+            divisibility: params.divisibility,
+            live_time: params.live_time,
+            mint_mechanism: {
               free_mint: {
                 amount_per_mint: params.amount_per_mint,
-                supply_cap: params.simple_asset.supply_cap,
+                supply_cap: params.supply_cap,
               },
             },
           },
@@ -48,11 +51,13 @@ export class txBuilder {
     return {
       contract_creation: {
         contract_type: {
-          asset: {
-            asset: params.simple_asset,
-            distribution_schemes: {
+          moa: {
+            ticker: params.ticker,
+            divisibility: params.divisibility,
+            live_time: params.live_time,
+            supply_cap: params.supply_cap,
+            mint_mechanism: {
               preallocated: params.preallocated,
-              free_mint: params.free_mint,
             },
           },
         },
@@ -60,18 +65,18 @@ export class txBuilder {
     };
   }
 
-
   static purchaseBurnSwapContractInstantiate(
     params: PurchaseBurnContractParams
   ): PurchaseBurnContractFormat {
     return {
       contract_creation: {
         contract_type: {
-          asset: {
-            asset: params.simple_asset,
-            distribution_schemes: {
-              purchase: params.purchase_burn_swap
-            },
+          moa: {
+            ticker: params.ticker,
+            divisibility: params.divisibility,
+            live_time: params.live_time,
+            supply_cap: params.supply_cap,
+            mint_mechanism: { purchase: params.purchase_burn_swap },
           },
         },
       },
@@ -86,6 +91,7 @@ export class txBuilder {
           mint: {
             pointer: params.pointer,
             oracle_message: params.oracle_message,
+            pointer_to_key: params.pointer_to_key,
           },
         },
       },
@@ -97,6 +103,5 @@ export class txBuilder {
   }
 }
 
-export * from "../utxo";
 export * from "./types";
-export * from "./message"
+export * from "./message";

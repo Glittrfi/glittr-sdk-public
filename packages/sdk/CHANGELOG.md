@@ -1,5 +1,11 @@
 # @glittr-sdk/sdk
 
+## 0.19.0
+
+### Minor Changes
+
+- Update refactor contract
+
 ## 0.7.0
 
 ### Minor Changes
