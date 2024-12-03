@@ -1,12 +1,5 @@
 import { sign } from "@bitcoinerlab/secp256k1";
-import {
-  Account,
-  BlockTxTuple,
-  GlittrSDK,
-  OutPoint,
-  Ratio,
-  txBuilder,
-} from "@glittr-sdk/sdk";
+import { Account, BlockTxTuple, GlittrSDK, txBuilder } from "@glittr-sdk/sdk";
 import {
   OracleMessage,
   OracleMessageSigned,
@@ -37,11 +30,9 @@ console.log(`Minter account ${minterAccount.p2pkh().address}`);
 // ORACLE
 // Generate a random private key
 const oraclePrivateKey = new Uint8Array([
-  155, 112,   1,  86, 197, 238,  25, 119,
-   90, 109, 241, 199, 214, 248, 145, 209,
-  253, 107,  11,  21, 162,  36, 125,  70,
-   42,  12, 110,  21, 177, 251,   9,  79
-])
+  155, 112, 1, 86, 197, 238, 25, 119, 90, 109, 241, 199, 214, 248, 145, 209,
+  253, 107, 11, 21, 162, 36, 125, 70, 42, 12, 110, 21, 177, 251, 9, 79,
+]);
 
 // Get the corresponding public key
 const oraclePubkey = Array.from(getPublicKey(oraclePrivateKey, true)).slice(1);
@@ -75,17 +66,14 @@ async function createContract() {
   const creatorBitcoinAddress = creatorAccount.p2pkh().address;
 
   const tx = txBuilder.purchaseBurnSwapContractInstantiate({
-    simple_asset: {
-      divisibility: 1,
-      live_time: 0,
-    },
+    divisibility: 1,
+    live_time: 0,
     purchase_burn_swap: {
       input_asset: "raw_btc",
-      transfer_scheme: { purchase: creatorBitcoinAddress },
-      transfer_ratio_type: {
+      ratio: {
         oracle: {
-          pubkey: oraclePubkey,
           setting: {
+            pubkey: oraclePubkey,
             asset_id: "btc",
             block_height_slippage: 5,
           },
@@ -161,7 +149,7 @@ async function mint() {
 
 async function checkingAsset() {
   const assetTxId =
-    "cece25c03d7d2c1a297eab6eff89965989259953c0b55e08c3f1370a0ecdfdc8"
+    "cece25c03d7d2c1a297eab6eff89965989259953c0b55e08c3f1370a0ecdfdc8";
   const vout = 0;
   const result = await fetch(
     `https://devnet-core-api.glittr.fi/assets/${assetTxId}/${vout}`
@@ -170,5 +158,4 @@ async function checkingAsset() {
   console.log(await result.text());
 }
 
-
-mint()
+mint();

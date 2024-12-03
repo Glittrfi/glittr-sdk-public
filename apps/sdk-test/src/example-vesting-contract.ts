@@ -2,7 +2,7 @@ import {
   Account,
   BlockTxTuple,
   GlittrSDK,
-  Ratio,
+  Fraction,
   txBuilder,
 } from "@glittr-sdk/sdk";
 
@@ -62,7 +62,7 @@ async function createContract() {
 
   console.log(receiver1PublicKey, receiver2PublicKey);
 
-  const quarterlyVesting: [Ratio, number][] = [
+  const quarterlyVesting: [Fraction, number][] = [
     [[25, 100], -1], // 25% unlocked after 1 blocks
     [[25, 100], -2], // 25% unlocked after 2 blocks
     [[25, 100], -3], // 25% unlocked after 3 blocks
@@ -70,11 +70,9 @@ async function createContract() {
   ];
 
   const tx = txBuilder.preallocatedContractInstantiate({
-    simple_asset: {
-      supply_cap: 1000n.toString(),
-      divisibility: 100,
-      live_time: 0,
-    },
+    divisibility: 100,
+    live_time: 0,
+    supply_cap: 1000n.toString(),
     preallocated: {
       allocations: {
         "100": [receiver1PublicKey],
@@ -83,11 +81,6 @@ async function createContract() {
       vesting_plan: {
         scheduled: quarterlyVesting,
       },
-    },
-    // free mint
-    free_mint: {
-      supply_cap: 700n.toString(),
-      amount_per_mint: 1n.toString(),
     },
   });
   console.log(JSON.stringify(tx));

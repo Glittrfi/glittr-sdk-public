@@ -1,4 +1,4 @@
-import { BlockTxTuple, U128 } from "../utils/common";
+import { BlockTxTuple } from "../utils/common";
 import { CallType } from "./calltype/types";
 import { ContractType } from "./contract/types";
 import { TxTypeTransfer } from "./transfer/types";
@@ -9,6 +9,7 @@ export type Transfer = {
 
 export type ContractCreation = {
   contract_type: ContractType;
+  spec?: BlockTxTuple
 };
 
 export type ContractCall = {

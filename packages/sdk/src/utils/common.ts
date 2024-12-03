@@ -1,6 +1,6 @@
 export type BlockHeight = number;
 export type BlockTxTuple = [number, number];
-export type Ratio = [number, number];
+export type Fraction = [number, number];
 export type BitcoinAddress = string;
 export type OutPointStr = string;
 export type RelativeOrAbsoluteBlockHeight = number;

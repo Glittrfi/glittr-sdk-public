@@ -86,13 +86,11 @@ async function contractCreation(
   });
 
   const t = txBuilder.freeMintContractInstantiate({
-    simple_asset: {
-      supply_cap: supplyCap.toString(),
-      divisibility,
-      live_time: liveTime,
-    },
     amount_per_mint: amountPerMint.toString(),
-  });
+    divisibility: divisibility,
+    live_time: liveTime,
+    supply_cap: supplyCap.toString()
+  })
   const embed = encodeGlittrData(JSON.stringify(t));
   const utxo = await getUtxo(payment.address!);
   const txHex = await getTxHex(utxo.txid);

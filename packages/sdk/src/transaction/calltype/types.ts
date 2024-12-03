@@ -1,11 +1,11 @@
-import { OutPoint, Ratio, U128 } from "../../utils";
+import { OutPoint, Fraction, U128 } from "../../utils";
 
 export type OracleMessage = {
   input_outpoint?: OutPoint;
   min_in_value?: U128;
   out_value?: U128;
   asset_id?: string;
-  ratio?: Ratio;
+  ratio?: Fraction;
   block_height: number;
 };
 
@@ -14,9 +14,14 @@ export type OracleMessageSigned = {
   message: OracleMessage;
 };
 
-export type MintOption = {
-  pointer: number;
+export type MintBurnOption = {
+  pointer?: number;
   oracle_message?: OracleMessageSigned;
+  pointer_to_key?: number 
 };
 
-export type CallType = { mint: MintOption } | { burn: {} } | { swap: {} };
+export type SwapOption = {
+  pointer: number
+}
+
+export type CallType = { mint: MintBurnOption } | { burn: {} } | { swap: {} };

@@ -1,5 +1,8 @@
-import { AssetContract } from "./asset";
+import { MintBurnAssetContract } from "./mba";
+import { MintOnlyAssetContract } from "./moa";
+import { SpecContract } from "./spec";
 
-export type ContractType = {
-  asset: AssetContract;
-};
+export type ContractType =
+  | { moa: MintOnlyAssetContract }
+  | { mba: MintBurnAssetContract }
+  | { spec: SpecContract };
