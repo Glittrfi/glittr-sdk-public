@@ -1,6 +1,6 @@
 import { Psbt } from "bitcoinjs-lib";
 import { Account } from "../account/types";
-import { TransactionFormat, TransferFormat } from "../transaction/message";
+import { TransactionFormat } from "../transaction/message";
 import { Network } from "../types";
 import { BitcoinUTXO, Output } from "../utxo";
 import { coinSelect } from "./coinselect";

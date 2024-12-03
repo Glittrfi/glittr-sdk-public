@@ -13,11 +13,12 @@ async function createFreeMintContract() {
     network: NETWORK,
   });
 
-  const c = txBuilder.freeMintContractInstantiate({
+  const c = txBuilder.freeMint({
     amount_per_mint: 2n.toString(),
     divisibility: 18,
     live_time: 0,
     supply_cap: 2000n.toString(),
+    ticker: "GLTR",
   });
 
   const txid = await client.createAndBroadcastTx({
@@ -65,5 +66,4 @@ async function transfer() {
   console.log("TXID : ", txid);
 }
 
-
-createFreeMintContract()
+createFreeMintContract();

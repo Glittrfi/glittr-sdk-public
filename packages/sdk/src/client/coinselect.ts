@@ -1,10 +1,8 @@
 import { AddressType } from "bitcoin-address-validation";
 import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
-import { payments, Psbt } from "bitcoinjs-lib";
-import { getBitcoinNetwork } from "../utils";
+import { payments } from "bitcoinjs-lib";
 import {
-  MintContractCallFormat,
   TransactionFormat,
   TransferFormat,
 } from "../transaction";

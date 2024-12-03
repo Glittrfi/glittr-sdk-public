@@ -65,17 +65,19 @@ async function createContract() {
   ///
   const creatorBitcoinAddress = creatorAccount.p2pkh().address;
 
-  const tx = txBuilder.purchaseBurnSwapContractInstantiate({
+  const tx = txBuilder.contractInstantiate({
     divisibility: 1,
     live_time: 0,
-    purchase_burn_swap: {
-      input_asset: "raw_btc",
-      ratio: {
-        oracle: {
-          setting: {
-            pubkey: oraclePubkey,
-            asset_id: "btc",
-            block_height_slippage: 5,
+    mint_mechanism: {
+      purchase: {
+        input_asset: "raw_btc",
+        ratio: {
+          oracle: {
+            setting: {
+              pubkey: oraclePubkey,
+              asset_id: "btc",
+              block_height_slippage: 5,
+            },
           },
         },
       },
@@ -128,10 +130,14 @@ async function mint() {
     message: oracleMessage,
   };
 
-  const tx = txBuilder.mint({
-    contract,
-    pointer: 0, // 1 is op_return, 0 is specified, last is remainder
-    oracle_message: oracleSignedMessage,
+  const tx = txBuilder.contractCall({
+    contract: contract,
+    call_type: {
+      mint: {
+        pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+        oracle_message: oracleSignedMessage,
+      },
+    },
   });
 
   // mint 1000 sats, gets 70000000 == 0.7 usd

@@ -37,13 +37,15 @@ async function createContract() {
   ///     }
   const creatorBitcoinAddress = creatorAccount.p2pkh().address;
 
-  const tx = txBuilder.purchaseBurnSwapContractInstantiate({
+  const tx = txBuilder.contractInstantiate({
     divisibility: 8,
     live_time: 0,
     supply_cap: 21000000n.toString(),
-    purchase_burn_swap: {
-      input_asset: "raw_btc",
-      ratio: { fixed: { ratio: [1, 1] } }, // 1:1 ratio
+    mint_mechanism: {
+      purchase: {
+        input_asset: "raw_btc",
+        ratio: { fixed: { ratio: [1, 1] } }, // 1:1 ratio
+      },
     },
   });
 
@@ -59,9 +61,13 @@ async function createContract() {
 async function mint() {
   const contract: BlockTxTuple = [101869, 1]; // https://explorer.glittr.fi/tx/688cbe5f4c147e46ef3ed2bbf448291c2041a7ab14ee9032ce1153b1ce89ed6e
 
-  const tx = txBuilder.mint({
+  const tx = txBuilder.contractCall({
     contract,
-    pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+    call_type: {
+      mint: {
+        pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+      },
+    },
   });
 
   // mint 1000 sats

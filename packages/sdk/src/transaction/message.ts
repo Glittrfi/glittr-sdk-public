@@ -9,11 +9,11 @@ import { TxTypeTransfer } from "./transfer/types";
  * Contract Instantiate
  */
 export type ContractInstantiateParams = {
-  amount_per_mint: U128;
+  amount_per_mint?: U128;
   divisibility: number;
   live_time: BlockHeight;
-  supply_cap: U128;
-  ticker: string;
+  supply_cap?: U128;
+  ticker?: string;
   mint_mechanism: MBAMintMechanism
   burn_mechanism?: BurnMechanism
 };

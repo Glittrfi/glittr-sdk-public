@@ -69,17 +69,19 @@ async function createContract() {
     [[25, 100], -4], // 25% unlocked after 4 blocks
   ];
 
-  const tx = txBuilder.preallocatedContractInstantiate({
+  const tx = txBuilder.contractInstantiate({
     divisibility: 100,
     live_time: 0,
     supply_cap: 1000n.toString(),
-    preallocated: {
-      allocations: {
-        "100": [receiver1PublicKey],
-        "200": [receiver2PublicKey],
-      },
-      vesting_plan: {
-        scheduled: quarterlyVesting,
+    mint_mechanism: {
+      preallocated: {
+        allocations: {
+          "100": [receiver1PublicKey],
+          "200": [receiver2PublicKey],
+        },
+        vesting_plan: {
+          scheduled: quarterlyVesting,
+        },
       },
     },
   });
@@ -97,9 +99,13 @@ async function createContract() {
 async function vestedMint() {
   const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
-  const tx = txBuilder.mint({
+  const tx = txBuilder.contractCall({
     contract,
-    pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+    call_type: {
+      mint: {
+        pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+      },
+    },
   });
 
   const txid = await client.createAndBroadcastTx({
@@ -114,9 +120,13 @@ async function vestedMint() {
 async function freeMint() {
   const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
-  const tx = txBuilder.mint({
+  const tx = txBuilder.contractCall({
     contract,
-    pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+    call_type: {
+      mint: {
+        pointer: 0, // 1 is op_return, 0 is specified, last is remainder
+      },
+    },
   });
 
   const txid = await client.createAndBroadcastTx({
