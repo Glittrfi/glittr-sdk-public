@@ -1,5 +1,17 @@
 # @glittr-sdk/sdk
 
+## 0.21.0
+
+### Minor Changes
+
+- Simple message
+
+## 0.20.0
+
+### Minor Changes
+
+- Simple message
+
 ## 0.19.0
 
 ### Minor Changes
