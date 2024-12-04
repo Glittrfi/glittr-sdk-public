@@ -8,30 +8,34 @@ async function manualMessage() {
     contract_creation: {
       contract_type: {
         moa: {
-          supply_cap: 2000n.toString(),
           divisibility: 18,
           live_time: 0,
+          supply_cap: 2000n.toString(),
           mint_mechanism: {
             free_mint: {
-              supply_cap: 2000n.toString(),
               amount_per_mint: 10n.toString(),
+              supply_cap: 2000n.toString(),
             },
           },
         },
       },
     },
   };
-  const tBuild = txBuilder.buildMessage(t);
-  console.log(JSON.stringify(tBuild));
+  console.log(JSON.stringify(t));
 
-  const tA = txBuilder.freeMintContractInstantiate({
-    amount_per_mint: 10n.toString(),
+  const tA = txBuilder.contractInstantiate({
     divisibility: 18,
     live_time: 0,
     supply_cap: 2000n.toString(),
+    mint_mechanism: {
+      free_mint: {
+        amount_per_mint: 10n.toString(),
+        supply_cap: 2000n.toString(),
+      },
+    },
   });
   console.log(JSON.stringify(tA));
-  console.log(JSON.stringify(tBuild) === JSON.stringify(tA));
+  console.log(JSON.stringify(t) === JSON.stringify(tA));
 
   /**
    * Mint
@@ -42,11 +46,13 @@ async function manualMessage() {
       call_type: { mint: { pointer: 0 } },
     },
   };
-  const caBuild = txBuilder.buildMessage(ca);
-  console.log(JSON.stringify(caBuild));
+  console.log(JSON.stringify(ca));
 
-  const caA = txBuilder.mint({ contract: [100, 0], pointer: 0 });
-  console.log(JSON.stringify(caA));
-  console.log(JSON.stringify(caBuild) === JSON.stringify(caA));
+  const cM = txBuilder.contractCall({
+    contract: [100, 0],
+    call_type: { mint: { pointer: 0 } },
+  });
+  console.log(JSON.stringify(cM));
+  console.log(JSON.stringify(ca) === JSON.stringify(cM));
 }
 manualMessage();

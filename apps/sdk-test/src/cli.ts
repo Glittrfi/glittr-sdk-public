@@ -85,12 +85,13 @@ async function contractCreation(
     network: networks.regtest,
   });
 
-  const t = txBuilder.freeMintContractInstantiate({
+  const t = txBuilder.freeMint({
     amount_per_mint: amountPerMint.toString(),
     divisibility: divisibility,
     live_time: liveTime,
-    supply_cap: supplyCap.toString()
-  })
+    supply_cap: supplyCap.toString(),
+    ticker: "GLTTR",
+  });
   const embed = encodeGlittrData(JSON.stringify(t));
   const utxo = await getUtxo(payment.address!);
   const txHex = await getTxHex(utxo.txid);
@@ -118,9 +119,9 @@ async function mint(
   });
 
   const [block, tx] = contractId.split(":");
-  const m = txBuilder.mint({
+  const m = txBuilder.contractCall({
     contract: [parseInt(block!), parseInt(tx!)],
-    pointer,
+    call_type: { mint: { pointer: pointer } },
   });
 
   const embedMint = encodeGlittrData(JSON.stringify(m));

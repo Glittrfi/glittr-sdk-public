@@ -90,11 +90,16 @@ async function main() {
     ecpair.fromPublicKey(pubkey).verify(msghash, signature);
 
   // Contract Creation Section
-  const t = txBuilder.freeMintContractInstantiate({
-    amount_per_mint: 2n.toString(),
+  const t = txBuilder.contractInstantiate({
     divisibility: 18,
     live_time: 0,
     supply_cap: 2000n.toString(),
+    mint_mechanism: {
+      free_mint: {
+        amount_per_mint: 2n.toString(),
+        supply_cap: 2000n.toString(),
+      },
+    },
   });
   const embed = encodeGlittrData(JSON.stringify(t));
   const utxo = await getUtxo(payment.address!);
@@ -171,12 +176,16 @@ async function main() {
   }
 
   // Mint Section
-  const m = txBuilder.mint({
+  const m = txBuilder.contractCall({
     contract: [
       parseInt(txData?.block_tx.split(":")[0]),
       parseInt(txData?.block_tx.split(":")[1]),
     ],
-    pointer: 1,
+    call_type: {
+      mint: {
+        pointer: 1,
+      },
+    },
   });
   const embedMint = encodeGlittrData(JSON.stringify(m));
   const utxoMint = await getUtxo(payment.address!);
