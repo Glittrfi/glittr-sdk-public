@@ -1,5 +1,11 @@
 import { OutPoint, Fraction, U128 } from "../../utils";
 
+type AssertValues = {
+  input_values?: U128[]
+  total_collateralized?: U128[] 
+  min_out_value?: U128[] 
+}
+
 export type OracleMessage = {
   input_outpoint?: OutPoint;
   min_in_value?: U128;
@@ -18,6 +24,7 @@ export type MintBurnOption = {
   pointer?: number;
   oracle_message?: OracleMessageSigned;
   pointer_to_key?: number;
+  assert_values?: AssertValues
 };
 
 export type SwapOption = {
