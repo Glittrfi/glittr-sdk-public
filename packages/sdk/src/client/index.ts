@@ -10,6 +10,13 @@ import { AddressType } from "bitcoin-address-validation";
 import { encodeGlittrData } from "../utils/encode";
 import { fetchPOST } from "../utils/fetch";
 
+export type CreateTxParams = {
+  address: string;
+  tx: TransactionFormat;
+  outputs?: Output[];
+  utxos?: BitcoinUTXO[];
+};
+
 export type CreateBroadcastTxParams = {
   account: Account;
   tx: TransactionFormat;
@@ -79,8 +86,62 @@ export class GlittrSDK {
     }
   }
 
-  createTx() {}
-  broadcastTx() {}
+  async createTx({ address, tx, outputs, utxos }: CreateTxParams): Promise<Psbt> {
+    outputs = outputs ?? [];
+    const addressType = getAddressType(address);
+
+    const embed = encodeGlittrData(JSON.stringify(tx));
+    outputs = outputs.concat({ script: embed, value: 0 });
+
+    const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
+    const coins = await coinSelect(
+      getBitcoinNetwork(this.network),
+      utxos ?? [],
+      outputs,
+      2,
+      address,
+      tx,
+      this.getUtxos,
+      this.getTxHex,
+      this.getGlittrAsset,
+      address
+    );
+
+    const _inputs = coins?.inputs ?? [];
+    for (const input of _inputs) {
+      switch (addressType) {
+        case AddressType.p2pkh:
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            nonWitnessUtxo: input.nonWitnessUtxo,
+          });
+          break;
+        case AddressType.p2wpkh:
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            witnessUtxo: input.witnessUtxo,
+          });
+          break;
+        default:
+          throw new Error(`Error Address Type not supported yet`);
+      }
+    }
+
+    const _outputs = coins?.outputs ?? [];
+    for (const output of _outputs) {
+      if (output.address) {
+        psbt.addOutput({ address: output.address, value: output.value });
+      } else if (output.script) {
+        psbt.addOutput({ script: output.script, value: output.value });
+      }
+    }
+
+    return psbt
+  }
+
+  // broadcastTx() {}
 
   async createAndBroadcastTx({
     account,
@@ -88,7 +149,7 @@ export class GlittrSDK {
     outputs,
     utxos,
   }: CreateBroadcastTxParams) {
-    outputs = outputs ?? []
+    outputs = outputs ?? [];
 
     const addressType = getAddressType(account.address);
 
@@ -97,6 +158,7 @@ export class GlittrSDK {
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
+      getBitcoinNetwork(this.network),
       utxos ?? [],
       outputs,
       2,

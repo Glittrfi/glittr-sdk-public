@@ -1,11 +1,8 @@
 import { AddressType } from "bitcoin-address-validation";
 import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
-import { payments } from "bitcoinjs-lib";
-import {
-  TransactionFormat,
-  TransferFormat,
-} from "../transaction";
+import { networks, payments } from "bitcoinjs-lib";
+import { TransactionFormat, TransferFormat } from "../transaction";
 
 export const FEE_TX_EMPTY_SIZE = 4 + 1 + 1 + 4;
 
@@ -34,6 +31,7 @@ function _isTransferFormat(tx: TransactionFormat): tx is TransferFormat {
 }
 
 export async function coinSelect(
+  network: networks.Network,
   inputs: BitcoinUTXO[],
   outputs: Output[],
   feeRate: number,
@@ -116,7 +114,7 @@ export async function coinSelect(
         });
         break;
       case AddressType.p2wpkh:
-        const paymentOutput = payments.p2wpkh({ address }).output!;
+        const paymentOutput = payments.p2wpkh({ address, network }).output!;
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
