@@ -1,4 +1,11 @@
-import { Account, BlockTxTuple, GlittrSDK, txBuilder } from "@glittr-sdk/sdk";
+import {
+  Account,
+  BitcoinUTXO,
+  BlockTxTuple,
+  GlittrSDK,
+  txBuilder,
+} from "@glittr-sdk/sdk";
+import { InputAsset } from "@glittr-sdk/sdk/dist/transaction/shared";
 
 async function createFreeMintContract() {
   const NETWORK = "regtest";
@@ -9,22 +16,31 @@ async function createFreeMintContract() {
     glittrApi: "https://devnet-core-api.glittr.fi",
   });
   const account = new Account({
-    wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
+    // wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj", //bcrt1q0wlalygwr40hktazzu33t6m3979txzhykqxqlf
+    wif: "cUwTH3TtUhwyEe2Cewce7iMafPiZ7sMoakPseBEQNGmyewgPHGKC", //bcrt1qrm52jjtvjpvtqpyzvflvnpnjzc550fqmzat8xw
     network: NETWORK,
   });
 
-  const c = txBuilder.freeMint({
-    amount_per_mint: 2n.toString(),
-    divisibility: 18,
-    live_time: 0,
-    supply_cap: 2000n.toString(),
-    ticker: "GLTR",
+  const c = txBuilder.transfer({
+    transfers: [
+      {
+        amount: "150",
+        asset: [150368, 1],
+        output: 1,
+      },
+    ],
   });
 
   const txid = await client.createAndBroadcastTx({
-    account: account.p2pkh(),
+    account: account.p2wpkh(),
     tx: c,
-    outputs: [],
+    outputs: [
+      {
+        value: 546,
+        address: 'bcrt1q0wlalygwr40hktazzu33t6m3979txzhykqxqlf'
+        // address: 'bcrt1qrm52jjtvjpvtqpyzvflvnpnjzc550fqmzat8xw'
+      },
+    ],
   });
   console.log("TXID : ", txid);
 }

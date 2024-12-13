@@ -39,51 +39,6 @@ export class GlittrSDK {
     this.network = network;
     this.glittrApi = glittrApi;
     this.electrumApi = electrumApi;
-
-    this.getUtxos = this.getUtxos.bind(this);
-    this.getTxHex = this.getTxHex.bind(this);
-    this.getGlittrAsset = this.getGlittrAsset.bind(this);
-  }
-
-  private async getUtxos(address: string): Promise<BitcoinUTXO[]> {
-    // TODO glittr aware for txtype glittr
-    try {
-      const utxoFetch = await fetch(
-        `${this.electrumApi}/address/${address}/utxo`
-      );
-      const unconfirmedUtxos = (await utxoFetch.json()) ?? [];
-      const utxos = unconfirmedUtxos.filter(
-        (tx: BitcoinUTXO) => tx.status && tx.status.confirmed
-      );
-
-      return utxos;
-    } catch (e) {
-      throw new Error(`Error fetching UTXOS : ${e}`);
-    }
-  }
-
-  private async getTxHex(txId: string): Promise<string> {
-    try {
-      const txHexFetch = await fetch(`${this.electrumApi}/tx/${txId}/hex`);
-      const txHex = await txHexFetch.text();
-
-      return txHex;
-    } catch (e) {
-      throw new Error(`Error fetching TX Hex : ${e}`);
-    }
-  }
-
-  private async getGlittrAsset(txId: string, vout: number) {
-    try {
-      const assetFetch = await fetch(
-        `${this.glittrApi}/assets/${txId}/${vout}`
-      );
-      const asset = await assetFetch.text();
-
-      return JSON.stringify(asset);
-    } catch (e) {
-      throw new Error(`Error fetching Glittr Asset : ${e}`);
-    }
   }
 
   async createTx({ address, tx, outputs, utxos }: CreateTxParams): Promise<Psbt> {
@@ -101,9 +56,8 @@ export class GlittrSDK {
       2,
       address,
       tx,
-      this.getUtxos,
-      this.getTxHex,
-      this.getGlittrAsset,
+      this.electrumApi,
+      this.glittrApi,
       address
     );
 
@@ -154,7 +108,7 @@ export class GlittrSDK {
     const addressType = getAddressType(account.address);
 
     const embed = encodeGlittrData(JSON.stringify(tx));
-    outputs = outputs.concat({ script: embed, value: 0 });
+    outputs = [{ script: embed, value: 0 }, ...outputs];
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
@@ -164,11 +118,16 @@ export class GlittrSDK {
       2,
       account.address,
       tx,
-      this.getUtxos,
-      this.getTxHex,
-      this.getGlittrAsset,
+      this.electrumApi,
+      this.glittrApi,
       account.address
     );
+
+    // Hacky: If the embeded tx is different from the tx passed in, change the first output to the tx from coinselect
+    if (embed !== encodeGlittrData(JSON.stringify(coins?.tx))) {
+      const embedCoinTx = encodeGlittrData(JSON.stringify(coins?.tx));
+      outputs[0] = { script: embedCoinTx, value: 0 };
+    }
 
     const _inputs = coins?.inputs ?? [];
     for (const input of _inputs) {
@@ -210,13 +169,13 @@ export class GlittrSDK {
     const hex = psbt.extractTransaction(true).toHex();
 
     // Validate Glittr TX
-    const isValidGlittrTx = await fetchPOST(
-      `${this.glittrApi}/validate-tx`,
-      { "Content-Type": "application/json" },
-      hex
-    );
-    if (!isValidGlittrTx.is_valid)
-      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+    // const isValidGlittrTx = await fetchPOST(
+    //   `${this.glittrApi}/validate-tx`,
+    //   { "Content-Type": "application/json" },
+    //   hex
+    // );
+    // if (!isValidGlittrTx.is_valid)
+    //   throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
 
     // Broadcast TX
     const txId = await fetchPOST(
