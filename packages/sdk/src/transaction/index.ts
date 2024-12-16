@@ -1,21 +1,29 @@
+import { encodeGlittrData } from "../utils/encode";
 import {
-  ContractCallFormat,
   ContractCallParams,
-  ContractInstantiateFormat,
   ContractInstantiateParams,
-  CreatePoolContractInstantiateFormat,
   CreatePoolContractParams,
-  FreeMintContractInstantiateFormat,
   FreeMintContractParams,
-  PaidMintContractInstantiateFormat,
   PaidMintContractParams,
-  TransferFormat,
   TransferParams,
 } from "./message";
-export class txBuilder {
-  constructor() {}
+import { OpReturnMessage } from "./types";
 
-  static transfer(params: TransferParams): TransferFormat {
+interface TxBuilderStatic {
+  transfer(params: TransferParams): OpReturnMessage;
+  contractCall(params: ContractCallParams): OpReturnMessage;
+  contractInstantiate(params: ContractInstantiateParams): OpReturnMessage;
+  freeMint(params: FreeMintContractParams): OpReturnMessage;
+  paidMint(params: PaidMintContractParams): OpReturnMessage;
+  createPool(params: CreatePoolContractParams): OpReturnMessage;
+  customMessage(params: OpReturnMessage): OpReturnMessage;
+  compile(message: OpReturnMessage): Buffer;
+}
+
+class TxBuilderClass {
+  private constructor() { }
+
+  static transfer(params: TransferParams): OpReturnMessage {
     return {
       transfer: {
         transfers: params.transfers,
@@ -23,7 +31,7 @@ export class txBuilder {
     };
   }
 
-  static contractCall(params: ContractCallParams): ContractCallFormat {
+  static contractCall(params: ContractCallParams): OpReturnMessage {
     return {
       contract_call: {
         contract: params.contract,
@@ -34,7 +42,7 @@ export class txBuilder {
 
   static contractInstantiate(
     params: ContractInstantiateParams
-  ): ContractInstantiateFormat {
+  ): OpReturnMessage {
     if (params.burn_mechanism) {
       return {
         contract_creation: {
@@ -70,7 +78,7 @@ export class txBuilder {
 
   static freeMint(
     params: FreeMintContractParams
-  ): FreeMintContractInstantiateFormat {
+  ): OpReturnMessage {
     return {
       contract_creation: {
         contract_type: {
@@ -93,7 +101,7 @@ export class txBuilder {
 
   static paidMint(
     params: PaidMintContractParams
-  ): PaidMintContractInstantiateFormat {
+  ): OpReturnMessage {
     return {
       contract_creation: {
         contract_type: {
@@ -117,7 +125,7 @@ export class txBuilder {
 
   static createPool(
     params: CreatePoolContractParams
-  ): CreatePoolContractInstantiateFormat {
+  ): OpReturnMessage {
     return {
       contract_creation: {
         contract_type: {
@@ -146,7 +154,20 @@ export class txBuilder {
       },
     };
   }
+
+  static customMessage(params: OpReturnMessage): OpReturnMessage {
+    return params;
+  }
+
+  static compile(message: OpReturnMessage): Buffer {
+    if (!message || Object.keys(message).length === 0) {
+      throw new Error("No message to compile");
+    }
+    return encodeGlittrData(JSON.stringify(message));
+  }
 }
+
+export const txBuilder: TxBuilderStatic = TxBuilderClass;
 
 export * from "./types";
 export * from "./message";

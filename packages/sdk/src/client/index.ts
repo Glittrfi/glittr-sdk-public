@@ -1,6 +1,5 @@
 import { payments, Psbt } from "bitcoinjs-lib";
 import { Account } from "../account/types";
-import { TransactionFormat } from "../transaction/message";
 import { Network } from "../types";
 import { BitcoinUTXO, Output } from "../utxo";
 import { coinSelect } from "./coinselect";
@@ -10,17 +9,18 @@ import { AddressType } from "bitcoin-address-validation";
 import { encodeGlittrData } from "../utils/encode";
 import { fetchPOST } from "../utils/fetch";
 import { electrumFetchTxHex } from "../utils/electrum";
+import { OpReturnMessage } from "../transaction";
 
 export type CreateTxParams = {
   address: string;
-  tx: TransactionFormat;
+  tx: OpReturnMessage;
   outputs?: Output[];
   utxos?: BitcoinUTXO[];
 };
 
 export type CreateBroadcastTxParams = {
   account: Account;
-  tx: TransactionFormat;
+  tx: OpReturnMessage;
   outputs?: Output[];
   utxos?: BitcoinUTXO[];
 };
@@ -198,6 +198,14 @@ export class GlittrSDK {
     outputs
   }: CreateAndBroadcastRawTxParams) {
     const addressType = getAddressType(account.address);
+
+    if (inputs && inputs.length === 0) {
+      throw new Error("No inputs provided");
+    }
+
+    if (outputs && outputs.length === 0) {
+      throw new Error("No outputs provided");
+    }
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
 
