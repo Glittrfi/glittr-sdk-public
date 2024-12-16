@@ -37,6 +37,17 @@ function _isTxContainsTransfer(tx: OpReturnMessage) {
   return null;
 }
 
+function _isTxContainsMintContractCall(tx: OpReturnMessage) {
+  if (tx.contract_call && tx.contract_call.call_type && 'mint' in tx.contract_call.call_type) {
+    const mintCall = tx.contract_call.call_type.mint;
+    return {
+      contract: tx.contract_call.contract,
+      pointer: mintCall.pointer,
+    };
+  }
+  return null;
+}
+
 export async function coinSelect(
   network: networks.Network,
   inputs: BitcoinUTXO[],
@@ -195,9 +206,15 @@ export async function coinSelect(
     if (totalInputValue < totalOutputValue + totalFee) {
       addUtxosToInputs(nonUtxosGlittr, feeRate);
     }
+  }
 
-  } else {
-    // Add UTXOs from nonUtxosGlittr for non-transfer type
+  // // TODO handle mint, add output from mint pointer
+  // if (_isTxContainsMintContractCall(tx)) {
+  //   const mintCall = _isTxContainsMintContractCall(tx);
+  //   if (!mintCall) throw new Error("Mint TX invalid");
+  // }
+
+  if (totalInputValue < totalOutputValue + totalFee) {
     addUtxosToInputs(nonUtxosGlittr, feeRate);
   }
 

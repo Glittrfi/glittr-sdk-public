@@ -103,6 +103,7 @@ export class GlittrSDK {
   }
 
   // broadcastTx() {}
+
   async createAndBroadcastTx({
     account,
     tx,
@@ -129,7 +130,7 @@ export class GlittrSDK {
       account.address
     );
 
-    // Hacky: If the embeded tx is different from the tx passed in, change the first output to the tx from coinselect
+    // Hacky: If the embeded tx is different from the tx passed in, change the opreturn to the tx from coinselect
     if (embed !== encodeGlittrData(JSON.stringify(coins?.tx))) {
       const embedCoinTx = encodeGlittrData(JSON.stringify(coins?.tx));
       outputs[0] = { script: embedCoinTx, value: 0 };
