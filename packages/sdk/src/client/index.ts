@@ -243,6 +243,21 @@ export class GlittrSDK {
         psbt.addOutput({ script: output.script, value: output.value });
       }
     }
+
+    psbt.signAllInputs(account.keypair);
+    const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
+    if (!isValidSignature) {
+      throw new Error(`Error signature invalid`);
+    }
+    psbt.finalizeAllInputs();
+    const hex = psbt.extractTransaction(true).toHex();
+
+    const txId = await fetchPOST(
+      `${this.electrumApi}/tx`,
+      { "Content-Type": "application/json" },
+      hex
+    );
+    return txId;
   }
 }
 
