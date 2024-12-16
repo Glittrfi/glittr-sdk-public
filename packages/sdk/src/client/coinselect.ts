@@ -2,7 +2,8 @@ import { AddressType } from "bitcoin-address-validation";
 import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
 import { networks, payments } from "bitcoinjs-lib";
-import { OpReturnMessage, TransactionFormat, TransferFormat } from "../transaction";
+import { OpReturnMessage } from "../transaction";
+import { electrumFetchTxHex, electrumFetchUtxos } from "../utils/electrum";
 
 export const FEE_TX_EMPTY_SIZE = 4 + 1 + 1 + 4;
 
@@ -59,22 +60,7 @@ export async function coinSelect(
   //   return;
   // }
 
-  const fetchUtxos = async (address: string): Promise<BitcoinUTXO[]> => {
-    try {
-      const utxoFetch = await fetch(
-        `${electrumApi}/address/${address}/utxo`
-      );
-      const unconfirmedUtxos = (await utxoFetch.json()) ?? [];
-      const utxos = unconfirmedUtxos.filter(
-        (tx: BitcoinUTXO) => tx.status && tx.status.confirmed
-      );
-
-      return utxos;
-    } catch (e) {
-      throw new Error(`Error fetching UTXOS : ${e}`);
-    }
-  }
-  const utxos = await fetchUtxos(address);
+  const utxos = await electrumFetchUtxos(electrumApi, address);
 
   const fetchGlittrAsset = async (txId: string, vout: number) => {
     try {
@@ -215,23 +201,13 @@ export async function coinSelect(
     addUtxosToInputs(nonUtxosGlittr, feeRate);
   }
 
-  const fetchTxHex = async (txId: string): Promise<string> => {
-    try {
-      const txHexFetch = await fetch(`${electrumApi}/tx/${txId}/hex`);
-      const txHex = await txHexFetch.text();
-
-      return txHex;
-    } catch (e) {
-      throw new Error(`Error fetching TX Hex : ${e}`);
-    }
-  }
   // TODO handle multiple utxo type in one array
   let utxoInputs = [];
   const addressType = getAddressType(address);
   for (const utxo of inputs) {
     switch (addressType) {
       case AddressType.p2pkh:
-        const txHex = await fetchTxHex(utxo.txid);
+        const txHex = await electrumFetchTxHex(electrumApi, utxo.txid);
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
