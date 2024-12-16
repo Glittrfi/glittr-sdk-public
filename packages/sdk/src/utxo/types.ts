@@ -17,6 +17,10 @@ export type BitcoinUTXO = {
   witnessScript?: Uint8Array;
   isTaproot?: boolean;
   taprootWitness?: Uint8Array[];
+  assets?: { // Glittr assets
+    asset: string;
+    amount: number;
+  }[];
 };
 
 export type Output = {

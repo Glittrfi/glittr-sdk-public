@@ -1,11 +1,9 @@
 import { AddressType } from "bitcoin-address-validation";
 import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
-import { payments } from "bitcoinjs-lib";
-import {
-  TransactionFormat,
-  TransferFormat,
-} from "../transaction";
+import { networks, payments } from "bitcoinjs-lib";
+import { OpReturnMessage } from "../transaction";
+import { electrumFetchTxHex, electrumFetchUtxos } from "../utils/electrum";
 
 export const FEE_TX_EMPTY_SIZE = 4 + 1 + 1 + 4;
 
@@ -29,19 +27,36 @@ function _sumValues(data: BitcoinUTXO[] | Output[]) {
   return data.reduce((prev, input) => prev + (input.value || 0), 0);
 }
 
-function _isTransferFormat(tx: TransactionFormat): tx is TransferFormat {
-  return (tx as TransferFormat).transfer !== undefined;
+function _isTxContainsTransfer(tx: OpReturnMessage) {
+  if (tx.transfer && tx.transfer.transfers) {
+    return tx.transfer.transfers.map(transfer => ({
+      asset: transfer.asset,
+      amount: transfer.amount
+    }));
+  }
+  return null;
+}
+
+function _isTxContainsMintContractCall(tx: OpReturnMessage) {
+  if (tx.contract_call && tx.contract_call.call_type && 'mint' in tx.contract_call.call_type) {
+    const mintCall = tx.contract_call.call_type.mint;
+    return {
+      contract: tx.contract_call.contract,
+      pointer: mintCall.pointer,
+    };
+  }
+  return null;
 }
 
 export async function coinSelect(
+  network: networks.Network,
   inputs: BitcoinUTXO[],
   outputs: Output[],
   feeRate: number,
   address: string,
-  tx: TransactionFormat,
-  getUtxos: (address: string) => Promise<BitcoinUTXO[]>,
-  getTxHex: (txId: string) => Promise<string>,
-  getGlittrAsset: (txId: string, vout: number) => Promise<string>,
+  tx: OpReturnMessage,
+  electrumApi: string,
+  glittrApi: string,
   changeOutputAddress?: string
 ) {
   let txBytes = transactionBytes(inputs, outputs);
@@ -51,26 +66,50 @@ export async function coinSelect(
     0
   );
 
-  const totalFee = feeRate * txBytes;
-  if (totalInputValue > totalOutputValue + totalFee) {
-    return;
+  let totalFee = feeRate * txBytes;
+  // if (totalInputValue < totalOutputValue + totalFee) {
+  //   return;
+  // }
+
+  const utxos = await electrumFetchUtxos(electrumApi, address);
+
+  const fetchGlittrAsset = async (txId: string, vout: number) => {
+    try {
+      const assetFetch = await fetch(
+        `${glittrApi}/assets/${txId}/${vout}`
+      );
+      const asset = await assetFetch.text();
+
+      return JSON.stringify(asset);
+    } catch (e) {
+      throw new Error(`Error fetching Glittr Asset : ${e}`);
+    }
   }
-
-  const utxos = await getUtxos(address);
-
   // Separate UTXOs based on asset presence
   const utxosGlittr: BitcoinUTXO[] = [];
   const nonUtxosGlittr: BitcoinUTXO[] = [];
 
   for (const utxo of utxos) {
-    const assetString = await getGlittrAsset(utxo.txid, utxo.vout);
+    const assetString = await fetchGlittrAsset(utxo.txid, utxo.vout);
     const asset = JSON.parse(JSON.parse(assetString));
     const assetIsEmpty =
       !asset.assets ||
       !asset.assets.list ||
       Object.keys(asset.assets.list).length === 0;
 
-    assetIsEmpty ? nonUtxosGlittr.push(utxo) : utxosGlittr.push(utxo);
+    if (assetIsEmpty) {
+      nonUtxosGlittr.push(utxo);
+    } else {
+      // Convert the asset list object into the required format
+      const glittrUtxo: BitcoinUTXO = {
+        ...utxo,
+        assets: Object.entries(asset.assets.list).map(([assetId, amount]) => ({
+          asset: assetId,
+          amount: amount as number
+        }))
+      };
+      utxosGlittr.push(glittrUtxo);
+    }
   }
 
   const addUtxosToInputs = (utxosList: BitcoinUTXO[], feeRate: number) => {
@@ -89,26 +128,103 @@ export async function coinSelect(
     }
   };
 
-  if (_isTransferFormat(tx)) {
-    // Add UTXOs from utxosGlittr for transfer type
-    addUtxosToInputs(utxosGlittr, feeRate);
 
-    // If still not enough, add UTXOs from nonUtxosGlittr
+  if (_isTxContainsTransfer(tx)) {
+    const transferAssets = _isTxContainsTransfer(tx);
+    if (!transferAssets) throw new Error("Transfer TX invalid");
+
+
+    // Filter utxosGlittr to only include UTXOs that contain the required transfer assets
+    const relevantUtxos = utxosGlittr.filter(utxo => {
+      return transferAssets?.some(transfer =>
+        utxo.assets?.some(asset =>
+          Array.isArray(transfer.asset) &&
+          asset.asset === `${transfer.asset[0]}:${transfer.asset[1]}` 
+          // && BigInt(asset.amount) >= BigInt(transfer.amount)
+        )
+      );
+    });
+
+    addUtxosToInputs(relevantUtxos, feeRate);
+
+    // Handle if input asset is enough or more
+    const getInputAssetSum = (assetId: string) => {
+      return inputs.reduce((sum, input) => {
+        const matchingAsset = input.assets?.find(a => a.asset === assetId);
+        return sum + BigInt(matchingAsset?.amount || 0);
+      }, BigInt(0));
+    }
+
+    // Check if glittr asset inputs are enough
+    for (const { asset, amount } of transferAssets) {
+      const assetId = `${asset[0]}:${asset[1]}`;
+
+      // If input asset is enough, continue to next asset
+      if (getInputAssetSum(assetId) === BigInt(amount)) {
+        continue;
+      }
+
+      // Loop through relevant UTXOs till input asset is enough or more
+      for (const utxo of relevantUtxos) {
+        if (getInputAssetSum(assetId) >= BigInt(amount)) break;
+        if (inputs.some(input => input.txid === utxo.txid)) continue;
+        
+        addUtxosToInputs([utxo], feeRate);
+      }
+
+      // If input asset is still not enough, throw error
+      if (getInputAssetSum(assetId) < BigInt(amount)) {
+        throw new Error(`Insufficient balance for asset ${assetId}. Required: ${amount}, Available: ${getInputAssetSum(assetId)}`);
+      }
+
+      const excessAssetValue = getInputAssetSum(assetId) - BigInt(amount);
+      if (excessAssetValue > 0) {
+        // TODO handle excess asset input
+        // - add excess amount transfer tx into transfer.transfers
+        tx?.transfer?.transfers.push({
+          asset: asset,
+          amount: excessAssetValue.toString(),
+          output: outputs.length,
+        });
+
+        // - add output for excess amount to the sender address
+        outputs.push({
+          value: 546,
+          address: address,
+        });
+        txBytes += outputBytes({
+          value: 546,
+          address: address,
+        });
+        totalFee = feeRate * txBytes;
+
+        // - make sure the transfer index and output is matched
+      }
+    }
+
+    // Check if utxo inputs are enough, add from nonUtxosGlittr
     if (totalInputValue < totalOutputValue + totalFee) {
       addUtxosToInputs(nonUtxosGlittr, feeRate);
     }
-  } else {
-    // Add UTXOs from nonUtxosGlittr for non-transfer type
+  }
+
+  // // TODO handle mint, add output from mint pointer
+  // if (_isTxContainsMintContractCall(tx)) {
+  //   const mintCall = _isTxContainsMintContractCall(tx);
+  //   if (!mintCall) throw new Error("Mint TX invalid");
+  // }
+
+  if (totalInputValue < totalOutputValue + totalFee) {
     addUtxosToInputs(nonUtxosGlittr, feeRate);
   }
 
-  // Todo handle multiple utxo type in one array
+  // TODO handle multiple utxo type in one array
   let utxoInputs = [];
   const addressType = getAddressType(address);
   for (const utxo of inputs) {
     switch (addressType) {
       case AddressType.p2pkh:
-        const txHex = await getTxHex(utxo.txid);
+        const txHex = await electrumFetchTxHex(electrumApi, utxo.txid);
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -116,7 +232,7 @@ export async function coinSelect(
         });
         break;
       case AddressType.p2wpkh:
-        const paymentOutput = payments.p2wpkh({ address }).output!;
+        const paymentOutput = payments.p2wpkh({ address, network }).output!;
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -156,7 +272,7 @@ export async function coinSelect(
 
   const txFee = transactionBytes(inputs, outputs) * feeRate;
 
-  return { inputs: utxoInputs, outputs, fee, txFee };
+  return { inputs: utxoInputs, outputs, fee, txFee, tx };
 }
 
 function transactionBytes(inputs: BitcoinUTXO[], outputs: Output[]) {
@@ -180,11 +296,11 @@ function inputBytes(input: BitcoinUTXO) {
     if (input.taprootWitness) {
       bytes += Math.ceil(
         FEE_TX_INPUT_TAPROOT +
-          input.taprootWitness.reduce(
-            (prev, buffer) => prev + buffer.byteLength,
-            0
-          ) /
-            4
+        input.taprootWitness.reduce(
+          (prev, buffer) => prev + buffer.byteLength,
+          0
+        ) /
+        4
       );
     } else {
       bytes += FEE_TX_INPUT_TAPROOT;
