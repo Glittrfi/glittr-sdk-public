@@ -4,6 +4,8 @@ import { BitcoinUTXO, Output } from "../utxo";
 import { networks, payments } from "bitcoinjs-lib";
 import { OpReturnMessage } from "../transaction";
 import { electrumFetchTxHex, electrumFetchUtxos } from "../utils/electrum";
+import { getInputBytes, getOutputBytes, getTransactionBytes } from "../helper/fee";
+import { fetchGET } from "../utils/fetch";
 
 export const FEE_TX_EMPTY_SIZE = 4 + 1 + 1 + 4;
 
@@ -27,8 +29,10 @@ function _sumValues(data: BitcoinUTXO[] | Output[]) {
   return data.reduce((prev, input) => prev + (input.value || 0), 0);
 }
 
-function _isTxContainsTransfer(tx: OpReturnMessage) {
-  if (tx.transfer && tx.transfer.transfers) {
+function _isTxContainsOnlyTransfer(tx: OpReturnMessage) {
+  // Check if tx has exactly one key and it's 'transfer'
+  const keys = Object.keys(tx);
+  if (keys.length === 1 && keys[0] === 'transfer' && tx.transfer?.transfers) {
     return tx.transfer.transfers.map(transfer => ({
       asset: transfer.asset,
       amount: transfer.amount
@@ -55,11 +59,12 @@ export async function coinSelect(
   feeRate: number,
   address: string,
   tx: OpReturnMessage,
+  apiKey: string,
   electrumApi: string,
   glittrApi: string,
   changeOutputAddress?: string
 ) {
-  let txBytes = transactionBytes(inputs, outputs);
+  let txBytes = getTransactionBytes(inputs, outputs);
   let totalInputValue = inputs.reduce((prev, input) => prev + input.value, 0);
   const totalOutputValue = outputs.reduce(
     (prev, output) => prev + output.value!,
@@ -71,15 +76,14 @@ export async function coinSelect(
   //   return;
   // }
 
-  const utxos = await electrumFetchUtxos(electrumApi, address);
+  const utxos = await electrumFetchUtxos(electrumApi, apiKey, address);
 
   const fetchGlittrAsset = async (txId: string, vout: number) => {
     try {
-      const assetFetch = await fetch(
-        `${glittrApi}/assets/${txId}/${vout}`
-      );
-      const asset = await assetFetch.text();
-
+      const asset = await fetchGET(
+        `${glittrApi}/assets/${txId}/${vout}`,
+        { Authorization: `Bearer ${apiKey}` },
+      )
       return JSON.stringify(asset);
     } catch (e) {
       throw new Error(`Error fetching Glittr Asset : ${e}`);
@@ -114,7 +118,7 @@ export async function coinSelect(
 
   const addUtxosToInputs = (utxosList: BitcoinUTXO[], feeRate: number) => {
     for (const utxo of utxosList) {
-      const utxoBytes = inputBytes(utxo);
+      const utxoBytes = getInputBytes(utxo);
       const utxoFee = feeRate * utxoBytes;
       const utxoValue = utxo.value;
 
@@ -129,8 +133,8 @@ export async function coinSelect(
   };
 
 
-  if (_isTxContainsTransfer(tx)) {
-    const transferAssets = _isTxContainsTransfer(tx);
+  if (_isTxContainsOnlyTransfer(tx)) {
+    const transferAssets = _isTxContainsOnlyTransfer(tx);
     if (!transferAssets) throw new Error("Transfer TX invalid");
 
 
@@ -139,7 +143,7 @@ export async function coinSelect(
       return transferAssets?.some(transfer =>
         utxo.assets?.some(asset =>
           Array.isArray(transfer.asset) &&
-          asset.asset === `${transfer.asset[0]}:${transfer.asset[1]}` 
+          asset.asset === `${transfer.asset[0]}:${transfer.asset[1]}`
           // && BigInt(asset.amount) >= BigInt(transfer.amount)
         )
       );
@@ -168,7 +172,7 @@ export async function coinSelect(
       for (const utxo of relevantUtxos) {
         if (getInputAssetSum(assetId) >= BigInt(amount)) break;
         if (inputs.some(input => input.txid === utxo.txid)) continue;
-        
+
         addUtxosToInputs([utxo], feeRate);
       }
 
@@ -192,7 +196,7 @@ export async function coinSelect(
           value: 546,
           address: address,
         });
-        txBytes += outputBytes({
+        txBytes += getOutputBytes({
           value: 546,
           address: address,
         });
@@ -200,11 +204,6 @@ export async function coinSelect(
 
         // - make sure the transfer index and output is matched
       }
-    }
-
-    // Check if utxo inputs are enough, add from nonUtxosGlittr
-    if (totalInputValue < totalOutputValue + totalFee) {
-      addUtxosToInputs(nonUtxosGlittr, feeRate);
     }
   }
 
@@ -224,7 +223,7 @@ export async function coinSelect(
   for (const utxo of inputs) {
     switch (addressType) {
       case AddressType.p2pkh:
-        const txHex = await electrumFetchTxHex(electrumApi, utxo.txid);
+        const txHex = await electrumFetchTxHex(electrumApi, apiKey, utxo.txid);
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -248,9 +247,9 @@ export async function coinSelect(
   // Finalize
   let changeFee = FEE_TX_OUTPUT_BASE + FEE_TX_OUTPUT_PUBKEYHASH;
   if (changeOutputAddress) {
-    changeFee = outputBytes({ address, value: 0 }); // value: 0 is dummy
+    changeFee = getOutputBytes({ address, value: 0 }); // value: 0 is dummy
   }
-  const bytesAccum = transactionBytes(inputs, outputs);
+  const bytesAccum = getTransactionBytes(inputs, outputs);
   const feeAfterExtraOutput = feeRate * (bytesAccum + changeFee);
   const remainderAfterExtraOutput =
     inputs.reduce((prev, input) => prev + input.value, 0) -
@@ -270,78 +269,9 @@ export async function coinSelect(
   const fee = _sumValues(inputs) - _sumValues(outputs);
   if (!isFinite(fee)) return { fee: feeRate * bytesAccum };
 
-  const txFee = transactionBytes(inputs, outputs) * feeRate;
+  const txFee = getTransactionBytes(inputs, outputs) * feeRate;
 
   return { inputs: utxoInputs, outputs, fee, txFee, tx };
-}
-
-function transactionBytes(inputs: BitcoinUTXO[], outputs: Output[]) {
-  return (
-    FEE_TX_EMPTY_SIZE +
-    inputs.reduce((prev, input) => prev + inputBytes(input), 0) +
-    outputs.reduce((prev, output) => prev + outputBytes(output), 0)
-  );
-}
-
-function inputBytes(input: BitcoinUTXO) {
-  let bytes = FEE_TX_INPUT_BASE;
-
-  if (input.redeemScript) {
-    bytes += input.redeemScript.length;
-  }
-
-  if (input.witnessScript) {
-    bytes += Math.ceil(input.witnessScript.byteLength / 4);
-  } else if (input.isTaproot) {
-    if (input.taprootWitness) {
-      bytes += Math.ceil(
-        FEE_TX_INPUT_TAPROOT +
-        input.taprootWitness.reduce(
-          (prev, buffer) => prev + buffer.byteLength,
-          0
-        ) /
-        4
-      );
-    } else {
-      bytes += FEE_TX_INPUT_TAPROOT;
-    }
-  } else if (input.witnessUtxo) {
-    bytes += FEE_TX_INPUT_SEGWIT;
-  } else if (!input.redeemScript) {
-    bytes += FEE_TX_INPUT_PUBKEYHASH;
-  }
-
-  return bytes;
-}
-
-function outputBytes(output: Output) {
-  let bytes = FEE_TX_OUTPUT_BASE;
-
-  if (output.script) {
-    bytes += output.script.byteLength;
-  } else if (
-    output.address?.startsWith("bc1") || // mainnet
-    output.address?.startsWith("tb1") || // testnet
-    output.address?.startsWith("bcrt1") // regtest
-  ) {
-    // 42 for mainnet/testnet, 44 for regtest
-    if (output.address?.length === 42 || output.address?.length === 44) {
-      bytes += FEE_TX_OUTPUT_SEGWIT;
-    } else {
-      // taproot fee approximate is same like p2wsh (2 of 3 multisig)
-      bytes += FEE_TX_OUTPUT_SEGWIT_SCRIPTHASH;
-    }
-    // both testnet and regtest has the same prefix 2
-  } else if (
-    output.address?.startsWith("3") ||
-    output.address?.startsWith("2")
-  ) {
-    bytes += FEE_TX_OUTPUT_SCRIPTHASH;
-  } else {
-    bytes += FEE_TX_OUTPUT_PUBKEYHASH;
-  }
-
-  return bytes;
 }
 
 export function dustThreshold(feeRate: number) {
