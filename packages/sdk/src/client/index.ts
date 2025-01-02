@@ -10,6 +10,7 @@ import { encodeGlittrData } from "../utils/encode";
 import { fetchPOST } from "../utils/fetch";
 import { electrumFetchTxHex } from "../utils/electrum";
 import { OpReturnMessage } from "../transaction";
+import { APIS } from "./const";
 
 export type CreateTxParams = {
   address: string;
@@ -34,8 +35,6 @@ export type CreateAndBroadcastRawTxParams = {
 type GlittrSDKParams = {
   network: Network;
   apiKey: string,
-  glittrApi: string;
-  electrumApi: string;
 };
 
 export class GlittrSDK {
@@ -44,11 +43,11 @@ export class GlittrSDK {
   glittrApi: string;
   electrumApi: string;
 
-  constructor({ network, apiKey, glittrApi, electrumApi }: GlittrSDKParams) {
+  constructor({ network, apiKey }: GlittrSDKParams) {
     this.network = network;
     this.apiKey = apiKey;
-    this.glittrApi = glittrApi;
-    this.electrumApi = electrumApi;
+    this.glittrApi = APIS[network].glittrApi
+    this.electrumApi = APIS[network].electrumApi
   }
 
   async createTx({ address, tx, outputs, utxos }: CreateTxParams): Promise<Psbt> {
