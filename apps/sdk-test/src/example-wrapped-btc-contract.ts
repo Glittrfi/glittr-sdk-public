@@ -3,6 +3,7 @@ import { Account, BlockTxTuple, GlittrSDK, txBuilder } from "@glittr-sdk/sdk";
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
+  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
   glittrApi: "https://devnet-core-api.glittr.fi",
   electrumApi: "https://devnet-electrum.glittr.fi",
 });

@@ -12,6 +12,7 @@ async function createFreeMintContract() {
 
   const client = new GlittrSDK({
     network: NETWORK,
+    apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
     electrumApi: "https://devnet-electrum.glittr.fi",
     glittrApi: "https://devnet-core-api.glittr.fi",
   });
@@ -50,6 +51,7 @@ async function transfer() {
 
   const client = new GlittrSDK({
     network: NETWORK,
+    apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
     electrumApi: "https://devnet-electrum.glittr.fi",
     glittrApi: "https://devnet-core-api.glittr.fi",
   });
