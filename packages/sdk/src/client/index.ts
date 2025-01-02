@@ -33,17 +33,20 @@ export type CreateAndBroadcastRawTxParams = {
 
 type GlittrSDKParams = {
   network: Network;
+  apiKey: string,
   glittrApi: string;
   electrumApi: string;
 };
 
 export class GlittrSDK {
-  private network: Network;
-  private glittrApi: string;
+  network: Network;
+  apiKey: string;
+  glittrApi: string;
   electrumApi: string;
 
-  constructor({ network, glittrApi, electrumApi }: GlittrSDKParams) {
+  constructor({ network, apiKey, glittrApi, electrumApi }: GlittrSDKParams) {
     this.network = network;
+    this.apiKey = apiKey;
     this.glittrApi = glittrApi;
     this.electrumApi = electrumApi;
   }
@@ -63,6 +66,7 @@ export class GlittrSDK {
       2,
       address,
       tx,
+      this.apiKey,
       this.electrumApi,
       this.glittrApi,
       address
@@ -125,6 +129,7 @@ export class GlittrSDK {
       2,
       account.address,
       tx,
+      this.apiKey,
       this.electrumApi,
       this.glittrApi,
       account.address
@@ -187,7 +192,7 @@ export class GlittrSDK {
     // Broadcast TX
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
-      { "Content-Type": "application/json" },
+      { "Content-Type": "application/json", Authorization: `Bearer ${this.apiKey}` },
       hex
     );
     return txId;
@@ -213,7 +218,7 @@ export class GlittrSDK {
     for (const input of inputs) {
       switch (addressType) {
         case AddressType.p2pkh:
-          const txHex = await electrumFetchTxHex(this.electrumApi, input.txid);
+          const txHex = await electrumFetchTxHex(this.electrumApi, this.apiKey, input.txid);
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
@@ -255,7 +260,7 @@ export class GlittrSDK {
 
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
-      { "Content-Type": "application/json" },
+      { "Content-Type": "application/json", Authorization: `Bearer ${this.apiKey}` },
       hex
     );
     return txId;
