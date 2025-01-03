@@ -3,7 +3,7 @@ import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
 import { networks, payments } from "bitcoinjs-lib";
 import { OpReturnMessage } from "../transaction";
-import { electrumFetchTxHex, electrumFetchUtxos } from "../utils/electrum";
+import { electrumFetchTxHex, electrumFetchNonGlittrUtxos } from "../utils/electrum";
 import { getInputBytes, getOutputBytes, getTransactionBytes } from "../helper/fee";
 import { fetchGET } from "../utils/fetch";
 
@@ -76,7 +76,7 @@ export async function coinSelect(
   //   return;
   // }
 
-  const utxos = await electrumFetchUtxos(electrumApi, apiKey, address);
+  const utxos = await electrumFetchNonGlittrUtxos(electrumApi, apiKey, address);
 
   const fetchGlittrAsset = async (txId: string, vout: number) => {
     try {

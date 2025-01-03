@@ -171,3 +171,4 @@ export const txBuilder: TxBuilderStatic = TxBuilderClass;
 
 export * from "./types";
 export * from "./message";
+export * from './auto'

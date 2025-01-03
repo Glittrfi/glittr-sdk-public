@@ -1,11 +1,10 @@
 import {
   Account,
-  BitcoinUTXO,
   BlockTxTuple,
   GlittrSDK,
+  GlittrTransaction,
   txBuilder,
 } from "@glittr-sdk/sdk";
-import { InputAsset } from "@glittr-sdk/sdk/dist/transaction/shared";
 
 async function createFreeMintContract() {
   const NETWORK = "regtest";
@@ -80,4 +79,25 @@ async function transfer() {
   console.log("TXID : ", txid);
 }
 
-createFreeMintContract();
+async function autoTransaction() {
+  const NETWORK = 'regtest'
+
+  const client = new GlittrSDK({
+    network: NETWORK,
+    apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+  });
+  const creatorAccount = new Account({
+    // mroHGEtVBLxKoo34HSHbHdmKz1ooJdA3ew
+    wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
+    network: NETWORK,
+  });
+  const transaction = new GlittrTransaction({
+    account: creatorAccount,
+    client: client
+  })
+
+  const txid = await transaction.contractDeployment.freeMint("PONDS", 18, "100", "100000000") 
+  console.log(txid)
+}
+
+autoTransaction();

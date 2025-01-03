@@ -3,7 +3,7 @@ import { Account } from "../account";
 import { GlittrSDK } from "../client";
 import { getAssetTickers, getAssetUtxos } from "../helper/asset";
 import { addFeeToTx } from "../helper/fee";
-import { electrumFetchUtxos } from "../utils/electrum";
+import { electrumFetchNonGlittrUtxos } from "../utils/electrum";
 import { OracleMessageSigned } from "./calltype/types";
 import { MOAMintMechanism } from "./contract/moa";
 import { PurchaseBurnSwap } from "./shared";
@@ -27,7 +27,7 @@ class ContractDeployment {
     const assetTickers = await getAssetTickers(this.client.apiKey, inputAsset);
     const asset1Utxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, inputAsset[0]);
     const asset2Utxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, inputAsset[1]);
-    const utxos = await electrumFetchUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
 
     // Accumulate UTXOs and track excess
     let asset1Total = BigInt(0);
@@ -120,9 +120,9 @@ class ContractDeployment {
     const nonFeeInputs = [...usedUtxos1, ...usedUtxos2];
     const nonFeeOutputs: Output[] = [
       { script: txBuilder.compile(tx), value: 0 },
-      { address: this.account.p2wpkh().address, value: 546 },
-      { address: this.account.p2wpkh().address, value: 546 },
-      { address: this.account.p2wpkh().address, value: 546 },
+      { address: this.account.p2wpkh().address, value: 600 },
+      { address: this.account.p2wpkh().address, value: 600 },
+      { address: this.account.p2wpkh().address, value: 600 },
     ]
 
     const { inputs, outputs } = await addFeeToTx(
@@ -133,7 +133,7 @@ class ContractDeployment {
       nonFeeOutputs
     )
 
-    return this.client.createAndBroadcastRawTx({
+    return await this.client.createAndBroadcastRawTx({
       account: this.account.p2wpkh(),
       inputs,
       outputs,
@@ -156,11 +156,23 @@ class ContractDeployment {
       },
     };
 
-    return this.client.createAndBroadcastTx({
+    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const nonFeeInputs: BitcoinUTXO[] = []
+    const nonFeeOutputs: Output[] = [
+      { script: txBuilder.compile(tx), value: 0 },
+    ]
+    const { inputs, outputs } = await addFeeToTx(
+      this.client.network,
+      this.account.p2wpkh().address,
+      utxos,
+      nonFeeInputs,
+      nonFeeOutputs
+    )
+    return await this.client.createAndBroadcastRawTx({
       account: this.account.p2wpkh(),
-      tx,
-      outputs: [{ address: this.account.p2wpkh().address, value: 546 }],
-    });
+      inputs,
+      outputs
+    })
   }
 
   async paidMint(ticker: string, divisibility: number, mechanism: PurchaseBurnSwap, supplyCap?: string) {
@@ -185,11 +197,24 @@ class ContractDeployment {
       },
     };
 
-    return this.client.createAndBroadcastTx({
+    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const nonFeeInputs: BitcoinUTXO[] = []
+    const nonFeeOutputs: Output[] = [
+      { script: txBuilder.compile(tx), value: 0 },
+    ]
+    const { inputs, outputs } = await addFeeToTx(
+      this.client.network,
+      this.account.p2wpkh().address,
+      utxos,
+      nonFeeInputs,
+      nonFeeOutputs
+    )
+
+    return await this.client.createAndBroadcastRawTx({
       account: this.account.p2wpkh(),
-      tx,
-      outputs: [{ address: this.account.p2wpkh().address, value: 546 }],
-    });
+      inputs,
+      outputs
+    })
   }
 }
 
@@ -216,11 +241,25 @@ class ContractCall {
       },
     };
 
-    return this.client.createAndBroadcastTx({
+    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const nonFeeInputs: BitcoinUTXO[] = []
+    const nonFeeOutputs: Output[] = [
+      { script: txBuilder.compile(tx), value: 0 },
+      { address: receiver, value: 1000 }
+    ]
+    const { inputs, outputs } = await addFeeToTx(
+      this.client.network,
+      this.account.p2wpkh().address,
+      utxos,
+      nonFeeInputs,
+      nonFeeOutputs
+    )
+
+    return await this.client.createAndBroadcastRawTx({
       account: this.account.p2wpkh(),
-      tx,
-      outputs: [{ address: receiver, value: 546 }],
-    });
+      inputs,
+      outputs
+    })
   }
 }
 
@@ -238,25 +277,83 @@ export class GlittrTransaction {
   }
 
   async transfer(transfers: TransferParams[]): Promise<string> {
+    const allTransfers: {amount: string, asset: [number, number], output: number}[] = [];
+    const excessOutputs: {address: string, value: number}[] = [];
+
+    transfers.forEach((t, i) => {
+      allTransfers.push({
+        amount: t.amount,
+        asset: t.contractId.split(':').map(Number) as [number, number],
+        output: i + 1, // 0 is OpReturn
+      });
+    });
+
+    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+
+    const nonFeeInputs: BitcoinUTXO[] = []
+    for (const transfer of transfers) {
+      const assetRequired = BigInt(transfer.amount)
+      const assetUtxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, transfer.contractId)
+      let assetTotal = BigInt(0)
+
+      for (const utxo of assetUtxos) {
+        if (assetTotal >= assetRequired) break
+        assetTotal += BigInt(utxo.assetAmount)
+        nonFeeInputs.push({
+          txid: utxo.txid,
+          vout: utxo.vout,
+          value: utxo.value,
+          status: utxo.status
+        })
+      }
+
+      if (assetTotal < assetRequired) {
+        throw new Error(`Insufficient balance for asset ${transfer.contractId}. Required: ${assetRequired}, balance: ${assetTotal}`)
+      }
+
+      const excessAssetValue = assetTotal - assetRequired
+      if (excessAssetValue > 0) {
+        // Add excess transfer to allTransfers array
+        allTransfers.push({
+          asset: [Number(transfer.contractId.split(":")[0]), Number(transfer.contractId.split(":")[1])],
+          amount: excessAssetValue.toString(),
+          output: transfers.length + excessOutputs.length + 1
+        });
+        // Add excess asset output to sender
+        excessOutputs.push({
+          address: this.account.p2wpkh().address,
+          value: 600
+        });
+      }
+    }
+
     const tx: OpReturnMessage = {
       transfer: {
-        transfers: transfers.map((t, i) => ({
-          amount: t.amount,
-          asset: t.contractId.split(':').map(Number) as [number, number],
-          output: i + 1, // 0 is OpReturn
-        })),
-      },
+        transfers: allTransfers
+      }
     };
 
-    return this.client.createAndBroadcastTx({
-      account: this.account.p2wpkh(),
-      tx,
-      outputs: transfers.map(t => ({
-        value: Number(t.amount),
+    const nonFeeOutputs: Output[] = [
+      { script: txBuilder.compile(tx), value: 0 },
+      ...transfers.map(t => ({
         address: t.receiver,
+        value: 600
       })),
+      ...excessOutputs
+    ];
+
+    const { inputs, outputs } = await addFeeToTx(
+      this.client.network,
+      this.account.p2wpkh().address,
+      utxos,
+      nonFeeInputs,
+      nonFeeOutputs
+    )
+
+    return await this.client.createAndBroadcastRawTx({
+      account: this.account.p2wpkh(),
+      inputs,
+      outputs
     });
   }
-
-
 }
