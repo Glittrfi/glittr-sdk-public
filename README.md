@@ -34,7 +34,9 @@ async function main() {
 
   const client = new GlittrSDK({
     network: NETWORK,
-    apiKey: <your api key>
+    apiKey: <your api key>,
+    glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+    electrumApi: "https://devnet-electrum.glittr.fi" // devnet
   });
   const account = new Account({
     network: NETWORK,

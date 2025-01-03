@@ -35,6 +35,8 @@ export type CreateAndBroadcastRawTxParams = {
 type GlittrSDKParams = {
   network: Network;
   apiKey: string,
+  glittrApi: string,
+  electrumApi: string,
 };
 
 export class GlittrSDK {
@@ -43,11 +45,11 @@ export class GlittrSDK {
   glittrApi: string;
   electrumApi: string;
 
-  constructor({ network, apiKey }: GlittrSDKParams) {
+  constructor({ network, apiKey, glittrApi, electrumApi }: GlittrSDKParams) {
     this.network = network;
     this.apiKey = apiKey;
-    this.glittrApi = APIS[network].glittrApi
-    this.electrumApi = APIS[network].electrumApi
+    this.glittrApi = glittrApi;
+    this.electrumApi = electrumApi;
   }
 
   async createTx({ address, tx, outputs, utxos }: CreateTxParams): Promise<Psbt> {
@@ -191,7 +193,7 @@ export class GlittrSDK {
     // Broadcast TX
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
-      { "Content-Type": "application/json", Authorization: `Bearer ${this.apiKey}` },
+      { Authorization: `Bearer ${this.apiKey}` },
       hex
     );
     return txId;
@@ -259,7 +261,7 @@ export class GlittrSDK {
 
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
-      { "Content-Type": "application/json", Authorization: `Bearer ${this.apiKey}` },
+      { Authorization: `Bearer ${this.apiKey}` },
       hex
     );
     return txId;
