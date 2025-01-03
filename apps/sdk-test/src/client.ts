@@ -96,8 +96,18 @@ async function autoTransaction() {
     client: client
   })
 
-  const txid = await transaction.contractDeployment.freeMint("PONDS", 18, "100", "100000000") 
-  console.log(txid)
+  // const txid = await transaction.contractDeployment.freeMint("PONDS", 18, "100", "100000000") 
+  const txid = await transaction.transfer(
+    [
+      {
+        amount: '1000',
+        contractId: '108018:1',
+        receiver: 'mroHGEtVBLxKoo34HSHbHdmKz1ooJdA3ew'
+      }
+    ]
+  )
+
+  console.log("Transaction ID:", txid);
 }
 
 autoTransaction();
