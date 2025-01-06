@@ -48,4 +48,37 @@ async function deployFreeMintContract() {
   console.log("Transaction ID:", txid);
 }
 
+async function deployPreallocatedFreeMint() {
+  const NETWORK = 'regtest'
+  const client = new GlittrSDK({
+    network: NETWORK,
+    apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+    glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+    electrumApi: "https://devnet-electrum.glittr.fi" // devnet
+  })
+  const account = new Account({
+    network: NETWORK,
+    wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
+  })
+ 
+  const tx: OpReturnMessage = {
+    contract_creation: {
+      contract_type: {
+        moa: {
+          divisibility: 18,
+          live_time: 0,
+          mint_mechanism: {
+            preallocated: {
+              allocations: {
+              }
+            }
+          },
+          supply_cap: "10000",
+          ticker: "VBTC" 
+        }
+      }
+    }
+  }
+}
+
 deployFreeMintContract()
