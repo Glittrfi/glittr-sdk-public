@@ -130,7 +130,7 @@ export function getTransactionBytes(inputs: BitcoinUTXO[], outputs: Output[]) {
 export async function addFeeToTx(network: Network, address: string, utxos: BitcoinUTXO[], inputs: BitcoinUTXO[], outputs: Output[]) {
   const feeRate = await getFeeRate(network);
   const txBytes = getTransactionBytes(inputs, outputs);
-   const totalFee = feeRate * txBytes;
+  const totalFee = feeRate * txBytes;
 
   for (const utxo of utxos) {
     if (inputs.some(input => input.txid === utxo.txid && input.vout === utxo.vout)) continue
@@ -139,23 +139,32 @@ export async function addFeeToTx(network: Network, address: string, utxos: Bitco
 
     const totalInputValue = inputs.reduce((prev, input) => prev + input.value, 0);
     const totalOutputValue = outputs.reduce((prev, output) => prev + output.value!, 0);
-    if (totalInputValue >= totalOutputValue + totalFee + 546) break
+    if (totalInputValue >= totalOutputValue + totalFee + 1000) break
   }
 
   // Calculate change amount
   const changeAmountBytes = FEE_TX_OUTPUT_BASE + FEE_TX_OUTPUT_PUBKEYHASH
   const txBytesAfterFee = getTransactionBytes(inputs, outputs)
   const feeWithChangeAmount = feeRate * (txBytesAfterFee + changeAmountBytes)
-  const remainderAfterChangeAmount = 
-    inputs.reduce((prev, input) => prev + input.value, 0) - 
-    (outputs.reduce((prev, output) => prev + output.value, 0) + feeWithChangeAmount)
+  const remainderAfterChangeAmount =
+    inputs.reduce((prev, input) => prev + input.value, 0) -
+    (outputs.reduce((prev, output) => prev + output.value, 0) + feeWithChangeAmount + totalFee)
 
-  if (remainderAfterChangeAmount > 546) {
+  const changeFee = feeRate * (FEE_TX_OUTPUT_BASE + FEE_TX_OUTPUT_PUBKEYHASH)
+  if (remainderAfterChangeAmount > 546 && remainderAfterChangeAmount > changeFee) {
     outputs.push({
       address,
       value: remainderAfterChangeAmount
     })
   }
+
+  // Final validation temporary disabled
+  // const finalTxBytes = getTransactionBytes(inputs, outputs);
+  // const finalFee = inputs.reduce((prev, input) => prev + input.value, 0) -
+  //   outputs.reduce((prev, output) => prev + output.value, 0);
+  // if (finalFee / finalTxBytes < 1) {
+  //   throw new Error('Transaction fee rate too low. Minimum required is 1 sat/vbyte.');
+  // }
 
   return { inputs, outputs }
 }
