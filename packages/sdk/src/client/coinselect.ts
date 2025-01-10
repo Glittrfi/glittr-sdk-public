@@ -91,7 +91,7 @@ export async function coinSelect(
 
   for (const utxo of utxos) {
     const assetString = await fetchGlittrAsset(utxo.txid, utxo.vout);
-    const asset = JSON.parse(JSON.parse(assetString));
+    const asset = JSON.parse(assetString);
     const assetIsEmpty =
       !asset.assets ||
       !asset.assets.list ||
