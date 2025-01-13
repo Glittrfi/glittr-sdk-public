@@ -418,94 +418,102 @@ export const schema: any = {
                                     collateralized: {
                                       option: {
                                         struct: {
-                                          input_asset: {
-                                            enum: [
-                                              { struct: { raw_btc: { struct: {} } } },
-                                              { struct: { glittr_asset: { array: { type: { array: { type: 'u8' } }, len: 2 } } } }, // VARUINT Blocktxtuple
-                                              { struct: { rune: { struct: {} } } },
-                                              { struct: { ordinal: { struct: {} } } }
-                                            ]
-                                          },
                                           _mutable_assets: 'bool',
+                                          input_asset: {
+                                            option: {
+                                              array: {
+                                                type: {
+                                                  enum: [
+                                                    { struct: { raw_btc: { struct: {} } } },
+                                                    { struct: { glittr_asset: { array: { type: { array: { type: 'u8' } }, len: 2 } } } }, // VARUINT Blocktxtuple
+                                                    { struct: { rune: { struct: {} } } },
+                                                    { struct: { ordinal: { struct: {} } } }
+                                                  ]
+                                                }
+                                              }
+                                            }
+                                          },
                                           mint_structure: {
-                                            enum: [
-                                              {
-                                                struct: {
-                                                  ratio: {
-                                                    enum: [
-                                                      {
-                                                        struct: {
-                                                          fixed: {
-                                                            struct: {
-                                                              ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } } // VARUINT Fraction
-                                                            }
-                                                          }
-                                                        }
-                                                      },
-                                                      {
-                                                        struct: {
-                                                          oracle: {
-                                                            struct: {
-                                                              setting: {
-                                                                struct: {
-                                                                  pubkey: { array: { type: 'u8' } },
-                                                                  asset_id: { option: 'string' },
-                                                                  block_height_slippage: 'u8'
-                                                                }
+                                            option: {
+                                              enum: [
+                                                {
+                                                  struct: {
+                                                    ratio: {
+                                                      enum: [
+                                                        {
+                                                          struct: {
+                                                            fixed: {
+                                                              struct: {
+                                                                ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } } // VARUINT Fraction
                                                               }
                                                             }
                                                           }
-                                                        }
-                                                      }]
-                                                  }
-                                                }
-                                              },
-                                              {
-                                                struct: {
-                                                  proportional: {
-                                                    struct: {
-                                                      ratio_model: { enum: [{ struct: { constant_product: { struct: {} } } }] },
-                                                      inital_mint_pointer_to_key: { option: { array: { type: 'u8' } } }, //VARUINT
-                                                    }
-                                                  }
-                                                }
-                                              },
-                                              {
-                                                struct: {
-                                                  account: {
-                                                    struct: {
-                                                      max_ltv: { array: { type: { array: { type: 'u8' } }, len: 2 } }, // VARUINT Fraction
-                                                      ratio: {
-                                                        enum: [
-                                                          {
-                                                            struct: {
-                                                              fixed: {
-                                                                struct: {
-                                                                  ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } } // VARUINT Fraction
-                                                                }
-                                                              }
-                                                            }
-                                                          },
-                                                          {
-                                                            struct: {
-                                                              oracle: {
-                                                                struct: {
-                                                                  setting: {
-                                                                    struct: {
-                                                                      pubkey: { array: { type: 'u8' } },
-                                                                      asset_id: { option: 'string' },
-                                                                      block_height_slippage: 'u8'
-                                                                    }
+                                                        },
+                                                        {
+                                                          struct: {
+                                                            oracle: {
+                                                              struct: {
+                                                                setting: {
+                                                                  struct: {
+                                                                    pubkey: { array: { type: 'u8' } },
+                                                                    asset_id: { option: 'string' },
+                                                                    block_height_slippage: 'u8'
                                                                   }
                                                                 }
                                                               }
                                                             }
-                                                          }]
+                                                          }
+                                                        }]
+                                                    }
+                                                  }
+                                                },
+                                                {
+                                                  struct: {
+                                                    proportional: {
+                                                      struct: {
+                                                        ratio_model: { enum: [{ struct: { constant_product: { struct: {} } } }] },
+                                                        inital_mint_pointer_to_key: { option: { array: { type: 'u8' } } }, //VARUINT
                                                       }
                                                     }
                                                   }
-                                                }
-                                              }]
+                                                },
+                                                {
+                                                  struct: {
+                                                    account: {
+                                                      struct: {
+                                                        max_ltv: { array: { type: { array: { type: 'u8' } }, len: 2 } }, // VARUINT Fraction
+                                                        ratio: {
+                                                          enum: [
+                                                            {
+                                                              struct: {
+                                                                fixed: {
+                                                                  struct: {
+                                                                    ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } } // VARUINT Fraction
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            {
+                                                              struct: {
+                                                                oracle: {
+                                                                  struct: {
+                                                                    setting: {
+                                                                      struct: {
+                                                                        pubkey: { array: { type: 'u8' } },
+                                                                        asset_id: { option: 'string' },
+                                                                        block_height_slippage: 'u8'
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }]
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }]
+                                            }
                                           }
                                         }
                                       }

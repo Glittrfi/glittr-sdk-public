@@ -1,1 +1,1 @@
-{"root":["./src/cli.ts","./src/client.ts","./src/example-usd-contract.ts","./src/example-vesting-contract.ts","./src/example-wrapped-btc-contract.ts","./src/index.ts","./src/manual.ts","./src/message.ts"],"version":"5.7.2"}
+{"root":["./src/manual.ts","./src/prebuilt.ts","./src/examples/commitment.ts","./src/examples/freemint-compress.ts","./src/examples/usd-contract.ts","./src/examples/vesting-contract.ts","./src/examples/wrapped-btc-contract.ts"],"version":"5.7.2"}
