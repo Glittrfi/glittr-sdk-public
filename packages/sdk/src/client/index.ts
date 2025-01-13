@@ -102,7 +102,24 @@ export class GlittrSDK {
     return psbt
   }
 
-  // broadcastTx() {}
+  async broadcastTx(hex: string) {
+    // Validate Glittr TX
+    const isValidGlittrTx = await fetchPOST(
+      `${this.glittrApi}/validate-tx`,
+      { "Content-Type": "application/json" },
+      hex
+    );
+    if (!isValidGlittrTx.is_valid)
+      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+
+    // Broadcast TX
+    const txId = await fetchPOST(
+      `${this.electrumApi}/tx`,
+      { "Content-Type": "application/json" },
+      hex
+    );
+    return txId;
+  }
 
   async createAndBroadcastTx({
     account,
