@@ -1,13 +1,13 @@
 export type BitcoinUTXO = {
   txid: string;
   vout: number;
-  status: {
+  value: number;
+  status?: {
     confirmed: boolean;
     block_height: number;
     block_hash: string;
     block_time: number;
   };
-  value: number;
   nonWitnessUtxo?: Uint8Array;
   witnessUtxo?: {
     script: Uint8Array;

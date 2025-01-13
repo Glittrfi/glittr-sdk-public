@@ -1,10 +1,13 @@
+import { getGlittrAsset } from "../helper/asset";
 import { BitcoinUTXO } from "../utxo";
+import { fetchGET } from "./fetch";
 
-export const electrumFetchTxHex = async (electrumApiUrl: string, txId: string): Promise<string> => {
+export const electrumFetchTxHex = async (electrumApiUrl: string, apiKey: string, txId: string): Promise<string> => {
   try {
-    const txHexFetch = await fetch(`${electrumApiUrl}/tx/${txId}/hex`);
-    const txHex = await txHexFetch.text();
-
+    const txHex = await fetchGET(
+      `${electrumApiUrl}/tx/${txId}/hex`,
+      { Authorization: `Bearer ${apiKey}` }
+    )
     return txHex;
   } catch (e) {
     throw new Error(`Error fetching TX Hex : ${e}`);
@@ -12,18 +15,32 @@ export const electrumFetchTxHex = async (electrumApiUrl: string, txId: string): 
 }
 
 
-export const electrumFetchUtxos = async (electrumApiUrl: string, address: string): Promise<BitcoinUTXO[]> => {
+export const electrumFetchNonGlittrUtxos = async (electrumApiUrl: string, apiKey: string, address: string): Promise<BitcoinUTXO[]> => {
   try {
-    const utxoFetch = await fetch(
-      `${electrumApiUrl}/address/${address}/utxo`
-    );
-    const unconfirmedUtxos = (await utxoFetch.json()) ?? [];
+    const unconfirmedUtxos = await fetchGET(
+      `${electrumApiUrl}/address/${address}/utxo`,
+      { Authorization: `Bearer ${apiKey}` }
+    ) ?? []
     const utxos = unconfirmedUtxos.filter(
       (tx: BitcoinUTXO) => tx.status && tx.status.confirmed
     );
 
-    return utxos;
+    const nonGlittrUtxos: BitcoinUTXO[] = []
+    for (const utxo of utxos) {
+      const assetString = await getGlittrAsset(apiKey, utxo.txid, utxo.vout)
+      const asset = JSON.parse(assetString);
+      const assetIsEmpty =
+        !asset.assets ||
+        !asset.assets.list ||
+        Object.keys(asset.assets.list).length === 0;
+
+      if (assetIsEmpty) {
+        nonGlittrUtxos.push(utxo)
+      }
+    }
+
+    return nonGlittrUtxos;
   } catch (e) {
-    throw new Error(`Error fetching UTXOS : ${e}`);
+    throw new Error(`Error fetching Non Glittr UTXOS : ${e}`);
   }
 }

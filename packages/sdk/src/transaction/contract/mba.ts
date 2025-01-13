@@ -1,5 +1,6 @@
 import { BlockHeight, Fraction, U128 } from "../../utils";
 import {
+  Commitment,
   FreeMint,
   InputAsset,
   OracleSetting,
@@ -58,4 +59,5 @@ export type MintBurnAssetContract = {
   mint_mechanism: MBAMintMechanism;
   burn_mechanism: BurnMechanism;
   swap_mechanism: SwapMechanism;
+  commitment?: Commitment
 };

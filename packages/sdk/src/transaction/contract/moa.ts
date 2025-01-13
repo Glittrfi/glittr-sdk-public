@@ -1,5 +1,5 @@
 import { BlockHeight, U128 } from "../../utils";
-import { FreeMint, Preallocated, PurchaseBurnSwap } from "../shared";
+import { Commitment, FreeMint, Preallocated, PurchaseBurnSwap } from "../shared";
 
 export type MOAMintMechanism = {
   preallocated?: Preallocated;
@@ -13,4 +13,5 @@ export type MintOnlyAssetContract = {
   divisibility: number;
   live_time: BlockHeight;
   mint_mechanism: MOAMintMechanism;
+  commitment?: Commitment
 };

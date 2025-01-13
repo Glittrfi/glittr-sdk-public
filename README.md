@@ -14,121 +14,139 @@ npm install @glittr-sdk/sdk
 
 ---
 
+## **API Key**
+
+You need API key to be able to interact with Glittr APIs. You can go to [Glittr Dev Portal](https://dev.glittr.fi) and signup for api key.
+
+---
+
 ## **Usage**
 
-Here’s an example of how to use the Glittr-SDK to create and broadcast a transaction:
+Here’s an example of how to use the Glittr-SDK to create and broadcast a Deploy Free Mint contract using a prebuilt transaction:
+
+#### **Prebuilt Transaction**
 
 ```javascript
-import { Account, GlittrSDK, txBuilder } from "@glittr-sdk/sdk";
+import { Account, GlittrSDK, GlittrTransaction } from "@glittr-sdk/sdk";
 
 async function main() {
-  const NETWORK = "regtest";
+  const NETWORK = 'regtest'
+
   const client = new GlittrSDK({
     network: NETWORK,
-    electrumApi: "https://devnet-electrum.glittr.fi",
-    glittrApi: "https://devnet-core-api.glittr.fi",
+    apiKey: <your api key>,
+    glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+    electrumApi: "https://devnet-electrum.glittr.fi" // devnet
   });
-
   const account = new Account({
-    wif: "your WIF here",
     network: NETWORK,
+    wif: <your WIF key>
   });
+  const transaction = new GlittrTransaction({
+    account: account,
+    client: client
+  })
 
-  const tx = txBuilder.freeMint({
-    amount_per_mint: "2",
-    divisibility: 18,
-    live_time: 0,
-    supply_cap: "2000",
-    ticker: "TEST",
-  });
-
-  const txid = await client.createAndBroadcastTx({
-    account: account.p2pkh(),
-    tx: tx,
-    outputs: [],
-  });
-
+  const txid = await transaction.contractDeployment.freeMint("PONDS", 18, "100", "100000000") 
   console.log("Transaction ID:", txid);
 }
 
 main();
 ```
 
+or you can use our helper functions to construct the transaction (input and output) manually:
+
+#### **Manual Transaction**
+
+```javascript
+import { Account, addFeeToTx, BitcoinUTXO, electrumFetchNonGlittrUtxos, GlittrSDK, OpReturnMessage, Output, txBuilder } from "@glittr-sdk/sdk";
+
+async function deployFreeMintContract() {
+  const NETWORK = 'regtest'
+  
+  const client = new GlittrSDK({
+    network: NETWORK,
+    apiKey: <your api key>,
+  })
+  const account = new Account({
+    network: NETWORK,
+    wif: <your WIF key>,
+  })
+  
+  const tx: OpReturnMessage = {
+    contract_creation: {
+      contract_type: {
+        moa: {
+          divisibility: 18,
+          live_time: 0,
+          supply_cap: "1000000000",
+          ticker: "FKBTC",
+          mint_mechanism: { free_mint: { amount_per_mint: "10", supply_cap: "1000000000" } }
+        }
+      },
+    },
+  };
+
+  // Helper function to fetch non Glittr UTXOs
+  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, account.p2wpkh().address)
+  
+  const nonFeeInputs: BitcoinUTXO[] = []
+  const nonFeeOutputs: Output[] = [
+    { script: txBuilder.compile(tx), value: 0 } // Output #0 should always be the OP_RETURN message
+  ]
+
+  // Helper function to include fee into the tx
+  const { inputs, outputs } = await addFeeToTx(
+    NETWORK,
+    account.p2wpkh().address,
+    utxos,
+    nonFeeInputs,
+    nonFeeOutputs
+  )
+
+  const txid = await client.createAndBroadcastRawTx({
+    account: account.p2wpkh(),
+    inputs,
+    outputs
+  })
+  console.log("Transaction ID:", txid);
+}
+
+deployFreeMintContract()
+```
+
 ---
 
-## **Prebuilt Functions**
+## **Prebuilt Transaction**
 
 The SDK provides prebuilt methods for creating Glittr transaction messages.
 
-#### **Create Free Mint Contract**
+#### **Transfer**
 ```javascript
-const freeMintContract = txBuilder.freeMint({
-  amount_per_mint: "2",
-  divisibility: 18,
-  live_time: 0,
-  supply_cap: "2000",
-  ticker: "GLTR"
-});
+const txid = await transaction.transfer(
+    [
+      {
+        amount: '1000',
+        contractId: '108018:1',
+        receiver: 'mroHGEtVBLxKoo34HSHbHdmKz1ooJdA3ew'
+      }
+    ]
+)
 ```
 
-### **Create Paid Mint Contract**
+#### **Deploy Free Mint Contract**
 ```javascript
-const paidMintContract = txBuilder.paidMint({
-  divisibility: 18,
-  live_time: 0,
-  supply_cap: "2000",
-  ticker: "GLTR",
-  payment: {
-    input_asset: "raw_btc",
-    ratio: {
-        oracle: {
-            setting: {
-                pubkey: <oracle pubkey>
-                asset_id: "btc",
-                block_height_slippage: 5
-            }
-        }
-    }
-  }
-});
+const txid = await transaction.contractDeployment.freeMint("GLITTR", 18, "100", "100000000") 
 ```
 
-### **Create Pool Contract**
+#### **Deploy Paid Mint Contract**
 ```javascript
-const poolContract = txBuilder.createPool({
-  divisibility: 18,
-  live_time: 0,
-  supply_cap: "2000",
-  assets: ["asset1", "asset2"],
-  invariant: 1,
-  initial_mint_restriction: 100
-});
-```
-
-### **Contract Call (Mint)**
-```javascript
-const transferTx = txBuilder.contractCall({
-  contract: [10001, 1], //block, tx
-  call_type: {
-      mint: { 
-        pointer: 1, // 1 is op_return, 0 is specified, last is remainder
-        oracle_message: <your oracle signed message> // optional
-      } 
-  }
-});
-```
-
-### **Transfer**
-```javascript
-const transferTx = txBuilder.transfer({
-  transfers: [
-    {
-        amount: "100",
-        asset: [10001, 1], //block, tx
-        output: 1
-    }
-  ]
-});
+const txid = await transaction.contractDeployment.paidMint(
+  "GLITTR",
+  18,
+  { input_asset: "raw_btc", ratio: { fixed: { ratio: [1, 1] } } },
+  "1000000000"
+)
 ```
 
 ---
@@ -137,8 +155,27 @@ const transferTx = txBuilder.transfer({
 
 This SDK allows you to construct custom messages by defining them in TypeScript using our supported message format. To do this, create a new variable and cast it to the `OpReturnMessage` type.
 
-#### **Example Free Mint Contract Creation**
+#### **Transfer**
+```typescript
+  const t: OpReturnMessage = {
+    transfer: {
+      transfers: [
+          {
+            amount: "100",
+            asset: [108170, 1],
+            output: 1
+          },
+          {
+            amount: "200",
+            asset: [110180, 1],
+            output: 2
+          }
+      ],
+    },
+  };
+```
 
+#### **Deploy Free Mint Contract**
 ```typescript
   const t: OpReturnMessage = {
     contract_creation: {
@@ -147,6 +184,7 @@ This SDK allows you to construct custom messages by defining them in TypeScript 
           divisibility: 18,
           live_time: 0,
           supply_cap: 2000n.toString(),
+          ticker: "GLITTR",
           mint_mechanism: {
             free_mint: {
               amount_per_mint: 10n.toString(),
@@ -159,120 +197,146 @@ This SDK allows you to construct custom messages by defining them in TypeScript 
   };
 ```
 
+#### **Deploy Paid Mint Contract**
+```typescript
+  const t: OpReturnMessage = {
+    contract_creation: {
+      contract_type: {
+        moa: {
+          divisibility: 18,
+          live_time: 0,
+          supply_cap: 2000n.toString(),
+          ticker: "GLITTR",
+          mint_mechanism: {
+            purchase: {
+              input_asset: "raw_btc",
+              ratio: { fixed: { ratio: [1, 1] } },
+            },
+          },
+        },
+      },
+    },
+  };
+```
 
 ---
 
 
 ## **APIs**
 
-### **txBuilder**
+### **GlittrTransaction**
 
-The `txBuilder` class provides methods to construct various types of transactions. Each function and its parameters are described below:
-
----
+The `GlittrTransaction` class provides high-level methods for creating various types of Glittr transactions. Each method and its parameters are described below:
 
 #### **`transfer`**
 
 ```typescript
-static transfer(params: TransferParams): TransferFormat
+async transaction.transfer(transfers: TransferParams[]): Promise<string>
 ```
 
 - **Parameters**:
-  - `transfers` (`TxTypeTransfer[]`)
-
+  - `transfers`: Array of transfer objects with the following structure:
+    ```typescript
+    type TransferParams = {
+      contractId: string;    // Format: "block:txIndex"
+      amount: string;        // Amount to transfer
+      receiver: string;      // Receiver's address
+    }
+    ```
 - **Returns**:
-  - `TransferFormat`: A formatted transfer transaction.
+  - `Promise<string>`: Transaction ID of the broadcasted transaction
 
 ---
 
-#### **`contractCall`**
+#### **Contract Deployment Methods**
+
+The `contractDeployment` property provides methods for deploying different types of contracts:
+
+##### **`freeMint`**
 
 ```typescript
-static contractCall(params: ContractCallParams): ContractCallFormat
+async transaction.contractDeployment.freeMint(
+  ticker: string,
+  divisibility: number,
+  amountPerMint: string,
+  supplyCap?: string
+): Promise<string>
 ```
 
 - **Parameters**:
-  - `contract` (`BlockTxTuple`)
-  - `call_type` (`CallType`)
-
+  - `ticker`: Token ticker symbol
+  - `divisibility`: Number of decimal places
+  - `amountPerMint`: Amount that can be minted per transaction
+  - `supplyCap`: Optional maximum supply cap
 - **Returns**:
-  - `ContractCallFormat`: A formatted contract call transaction.
+  - `Promise<string>`: Transaction ID of the broadcasted transaction
+
+##### **`paidMint`**
+
+```typescript
+async transaction.contractDeployment.paidMint(
+  ticker: string,
+  divisibility: number,
+  mechanism: PurchaseBurnSwap,
+  supplyCap?: string
+): Promise<string>
+```
+
+- **Parameters**:
+  - `ticker`: Token ticker symbol
+  - `divisibility`: Number of decimal places
+  - `mechanism`: Object containing:
+    ```typescript
+    type PurchaseBurnSwap = {
+      input_asset: string;
+      pay_to_key?: string;
+      ratio: {
+        fixed: {
+          ratio: [number, number]
+        }
+      }
+    }
+    ```
+  - `supplyCap`: Optional maximum supply cap
+- **Returns**:
+  - `Promise<string>`: Transaction ID of the broadcasted transaction
+
+##### **`liquidityPoolInitiate`**
+
+```typescript
+async transaction.contractDeployment.liquidityPoolInitiate(
+  inputAsset: [string, string],
+  inputAmount: [string, string]
+): Promise<string>
+```
+
+- **Parameters**:
+  - `inputAsset`: Tuple of two asset IDs in format ["block:txIndex", "block:txIndex"]
+  - `inputAmount`: Tuple of amounts for each asset
+- **Returns**:
+  - `Promise<string>`: Transaction ID of the broadcasted transaction
 
 ---
 
-#### **`contractInstantiate`**
+#### **Contract Call Methods**
+
+The `contractCall` property provides methods for interacting with deployed contracts:
+
+##### **`mint`**
 
 ```typescript
-static contractInstantiate(params: ContractInstantiateParams): ContractInstantiateFormat
+async transaction.contractCall.mint(
+  contractId: string,
+  receiver: string,
+  oracleMessage?: OracleMessageSigned
+): Promise<string>
 ```
 
 - **Parameters**:
-  - `divisibility` (`number`)
-  - `live_time` (`BlockHeight`)
-  - `supply_cap` (`U128`, optional)
-  - `ticker` (`string`, optional)
-  - `mint_mechanism` (`MBAMintMechanism`)
-  - `burn_mechanism` (`BurnMechanism`, optional)
-
+  - `contractId`: Contract ID in format "block:txIndex"
+  - `receiver`: Address to receive the minted tokens
+  - `oracleMessage`: Optional signed oracle message for specific mint types
 - **Returns**:
-  - `ContractInstantiateFormat`: A formatted contract instantiation transaction.
-
----
-
-#### **`freeMint`**
-
-```typescript
-static freeMint(params: FreeMintContractParams): FreeMintContractInstantiateFormat
-```
-
-- **Parameters**:
-  - `amount_per_mint` (`U128`)
-  - `divisibility` (`number`)
-  - `live_time` (`BlockHeight`)
-  - `supply_cap` (`U128`)
-  - `ticker` (`string`)
-
-- **Returns**:
-  - `FreeMintContractInstantiateFormat`: A formatted free mint contract transaction.
-
----
-
-#### **`paidMint`**
-
-```typescript
-static paidMint(params: PaidMintContractParams): PaidMintContractInstantiateFormat
-```
-
-- **Parameters**:
-  - `divisibility` (`number`)
-  - `live_time` (`BlockHeight`)
-  - `supply_cap` (`U128`)
-  - `ticker` (`string`)
-  - `payment`:
-    - `input_asset` (`InputAsset`)
-    - `pay_to` (`Pubkey`)
-    - `ratio` (`RatioType`)
-
-- **Returns**:
-  - `PaidMintContractInstantiateFormat`: A formatted paid mint contract transaction.
-
----
-
-#### **`createPool`**
-
-```typescript
-static createPool(params: CreatePoolContractParams): CreatePoolContractInstantiateFormat
-```
-
-- **Parameters**:
-  - `divisibility` (`number`)
-  - `live_time` (`BlockHeight`)
-  - `supply_cap` (`U128`)
-  - `assets` (`[InputAsset, InputAsset]`)
-  - `invariant` (`number`)
-  - `initial_mint_restriction` (`number`, optional)
-
-- **Returns**:
-  - `CreatePoolContractInstantiateFormat`: A formatted create pool contract transaction.
+  - `Promise<string>`: Transaction ID of the broadcasted transaction
 
 ---

@@ -1,9 +1,9 @@
-import { OutPoint, Fraction, U128 } from "../../utils";
+import { OutPoint, Fraction, U128, Pubkey } from "../../utils";
 
 type AssertValues = {
   input_values?: U128[]
-  total_collateralized?: U128[] 
-  min_out_value?: U128[] 
+  total_collateralized?: U128[]
+  min_out_value?: U128[]
 }
 
 export type OracleMessage = {
@@ -24,7 +24,8 @@ export type MintBurnOption = {
   pointer?: number;
   oracle_message?: OracleMessageSigned;
   pointer_to_key?: number;
-  assert_values?: AssertValues
+  assert_values?: AssertValues;
+  commitment_message?: CommitmentMessage;
 };
 
 export type SwapOption = {
@@ -38,6 +39,11 @@ export type OpenAccountOption = {
 
 export type CloseAccountOption = {
   pointer: number;
+}
+
+export type CommitmentMessage = {
+  public_key: Pubkey;
+  args: number[];
 }
 
 export type CallType =

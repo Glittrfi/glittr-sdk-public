@@ -1,19 +1,19 @@
 import {
   Account,
-  BitcoinUTXO,
   BlockTxTuple,
   GlittrSDK,
+  GlittrTransaction,
   txBuilder,
 } from "@glittr-sdk/sdk";
-import { InputAsset } from "@glittr-sdk/sdk/dist/transaction/shared";
 
 async function createFreeMintContract() {
   const NETWORK = "regtest";
 
   const client = new GlittrSDK({
     network: NETWORK,
-    electrumApi: "https://devnet-electrum.glittr.fi",
-    glittrApi: "https://devnet-core-api.glittr.fi",
+    apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+    glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+    electrumApi: "https://devnet-electrum.glittr.fi" // devnet
   });
   const account = new Account({
     // wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj", //bcrt1q0wlalygwr40hktazzu33t6m3979txzhykqxqlf
@@ -50,8 +50,9 @@ async function transfer() {
 
   const client = new GlittrSDK({
     network: NETWORK,
-    electrumApi: "https://devnet-electrum.glittr.fi",
-    glittrApi: "https://devnet-core-api.glittr.fi",
+    apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+    glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+    electrumApi: "https://devnet-electrum.glittr.fi" // devnet
   });
   const creatorAccount = new Account({
     // mroHGEtVBLxKoo34HSHbHdmKz1ooJdA3ew
@@ -82,4 +83,37 @@ async function transfer() {
   console.log("TXID : ", txid);
 }
 
-createFreeMintContract();
+async function autoTransaction() {
+  const NETWORK = 'regtest'
+
+  const client = new GlittrSDK({
+    network: NETWORK,
+    apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+    glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+    electrumApi: "https://devnet-electrum.glittr.fi" // devnet
+  });
+  const creatorAccount = new Account({
+    // mroHGEtVBLxKoo34HSHbHdmKz1ooJdA3ew
+    wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
+    network: NETWORK,
+  });
+  const transaction = new GlittrTransaction({
+    account: creatorAccount,
+    client: client
+  })
+
+  // const txid = await transaction.contractDeployment.freeMint("PONDS", 18, "100", "100000000") 
+  const txid = await transaction.transfer(
+    [
+      {
+        amount: '1000',
+        contractId: '108018:1',
+        receiver: 'mroHGEtVBLxKoo34HSHbHdmKz1ooJdA3ew'
+      }
+    ]
+  )
+
+  console.log("Transaction ID:", txid);
+}
+
+autoTransaction();
