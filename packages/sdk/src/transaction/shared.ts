@@ -50,3 +50,13 @@ export type PurchaseBurnSwap = {
   pay_to_key?: Pubkey;
   ratio: RatioType;
 };
+
+export type ArgsCommitment = {
+  fixed_string: string;
+  string: string
+}
+
+export type Commitment = {
+  public_key: Pubkey;
+  args: ArgsCommitment 
+}

@@ -13,7 +13,7 @@ export type ContractCreation = {
 };
 
 export type ContractCall = {
-  contract: BlockTxTuple;
+  contract: BlockTxTuple | null;
   call_type: CallType;
 };
 

@@ -9,3 +9,4 @@ export * from "./transaction";
 export * from "./utils";
 export * from "./utxo";
 export * from "./types";
+export * from "./helper";
