@@ -10,12 +10,14 @@ import { encodeGlittrData } from "../utils/encode";
 import { fetchPOST } from "../utils/fetch";
 import { electrumFetchTxHex } from "../utils/electrum";
 import { OpReturnMessage } from "../transaction";
+import { hex } from "@scure/base";
 
 export type CreateTxParams = {
   address: string;
   tx: OpReturnMessage;
   outputs?: Output[];
   utxos?: BitcoinUTXO[];
+  publicKey?: string;
 };
 
 export type CreateBroadcastTxParams = {
@@ -53,6 +55,7 @@ export class GlittrSDK {
     tx,
     outputs,
     utxos,
+    publicKey,
   }: CreateTxParams): Promise<Psbt> {
     outputs = outputs ?? [];
     const addressType = getAddressType(address);
@@ -70,7 +73,8 @@ export class GlittrSDK {
       tx,
       this.electrumApi,
       this.glittrApi,
-      address
+      address,
+      publicKey
     );
 
     const _inputs = coins?.inputs ?? [];
@@ -81,6 +85,24 @@ export class GlittrSDK {
             hash: input.hash,
             index: input.index,
             nonWitnessUtxo: input.nonWitnessUtxo,
+          });
+          break;
+        case AddressType.p2sh:
+          // NOTE: P2SH-P2WPKH for xverse (nested segwit)
+          const decodedPublicKey = Buffer.from(publicKey!, "hex");
+          const p2wpkh = payments.p2wpkh({
+            pubkey: decodedPublicKey,
+            network: getBitcoinNetwork(this.network),
+          });
+          const p2sh = payments.p2sh({
+            redeem: p2wpkh,
+            network: getBitcoinNetwork(this.network),
+          });
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            nonWitnessUtxo: input.nonWitnessUtxo,
+            redeemScript: p2sh.redeem?.output,
           });
           break;
         case AddressType.p2wpkh:
@@ -158,6 +180,7 @@ export class GlittrSDK {
     for (const input of _inputs) {
       switch (addressType) {
         case AddressType.p2pkh:
+        case AddressType.p2sh:
           psbt.addInput({
             hash: input.hash,
             index: input.index,

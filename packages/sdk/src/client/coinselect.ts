@@ -57,7 +57,8 @@ export async function coinSelect(
   tx: OpReturnMessage,
   electrumApi: string,
   glittrApi: string,
-  changeOutputAddress?: string
+  changeOutputAddress?: string,
+  publicKey?: string,
 ) {
   let txBytes = transactionBytes(inputs, outputs);
   let totalInputValue = inputs.reduce((prev, input) => prev + input.value, 0);
@@ -224,6 +225,7 @@ export async function coinSelect(
   for (const utxo of inputs) {
     switch (addressType) {
       case AddressType.p2pkh:
+      case AddressType.p2sh: 
         const txHex = await electrumFetchTxHex(electrumApi, utxo.txid);
         utxoInputs.push({
           hash: utxo.txid,
