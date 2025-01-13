@@ -6,18 +6,15 @@ import {
   Output,
   addFeeToTx,
   encodeVaruint,
-  schema,
+  txBuilder,
+  OpReturnMessage,
 } from "@glittr-sdk/sdk";
-import { script } from "bitcoinjs-lib";
-import { serialize } from "borsh";
-import { compress } from 'brotli-compress'
-
 
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
   apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
-  glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+  glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
 
@@ -26,24 +23,19 @@ const creatorAccount = new Account({
   network: NETWORK,
 });
 
-const minterAccount = new Account({
-  wif: "cMqUkLHLtHJ4gSBdxAVtgFjMnHkUi5ZXkrsoBcpECGrE2tcJiNDh",
-  network: NETWORK,
-});
-
 async function deployFreemintCompress() {
-  const tx: any = {
+  const tx: OpReturnMessage = {
     contract_creation: {
       contract_type: {
         moa: {
-          ticker: "HACKY",
+          ticker: "FOX",
           divisibility: 18,
           live_time: 0,
-          supply_cap: encodeVaruint(BigInt(300000000)),
+          supply_cap: encodeVaruint(BigInt(500000000)),
           mint_mechanism: {
             free_mint: {
-              supply_cap: encodeVaruint(BigInt(300000000)),
-              amount_per_mint: encodeVaruint(BigInt(30))
+              supply_cap: encodeVaruint(BigInt(500000000)),
+              amount_per_mint: encodeVaruint(BigInt(50))
             },
           },
         }
@@ -51,15 +43,10 @@ async function deployFreemintCompress() {
     }
   }
 
-  const jsEncoded = serialize(schema, tx)
-  const compressed = await compress(jsEncoded)
-  const glittrFlag = Buffer.from("GLITTR", "utf8"); // Prefix
-  const embed = script.compile([106, glittrFlag, Buffer.from(compressed)]);
-
   const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, creatorAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
-    { script: embed, value: 0 },
+    { script: await txBuilder.compress(tx), value: 0 },
     { address: creatorAccount.p2pkh().address, value: 546 }
   ]
 

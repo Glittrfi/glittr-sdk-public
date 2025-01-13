@@ -266,8 +266,8 @@ export class GlittrSDK {
       hex
     );
     if (!isValidGlittrTx.is_valid)
-      // throw new Error(`Invalid Glittr TX Format`)
-      console.error(`Invalid Glittr TX Format`)
+      throw new Error(`Invalid Glittr TX Format`)
+      // console.error(`Invalid Glittr TX Format`)
 
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
