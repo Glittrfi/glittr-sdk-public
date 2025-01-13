@@ -259,6 +259,16 @@ export class GlittrSDK {
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
+    // Validate Glittr TX
+    const isValidGlittrTx = await fetchPOST(
+      `${this.glittrApi}/validate-tx`,
+      {},
+      hex
+    );
+    if (!isValidGlittrTx.is_valid)
+      // throw new Error(`Invalid Glittr TX Format`)
+      console.error(`Invalid Glittr TX Format`)
+
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
       { Authorization: `Bearer ${this.apiKey}` },

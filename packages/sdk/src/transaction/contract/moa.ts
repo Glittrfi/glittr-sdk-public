@@ -12,6 +12,7 @@ export type MintOnlyAssetContract = {
   supply_cap?: U128;
   divisibility: number;
   live_time: BlockHeight;
+  end_time?: number;
   mint_mechanism: MOAMintMechanism;
   commitment?: Commitment
 };
