@@ -1,6 +1,7 @@
+export type Varuint = Uint8Array
 export type BlockHeight = number;
-export type BlockTxTuple = [number, number];
-export type Fraction = [number, number];
+export type BlockTxTuple = [Varuint, Varuint];
+export type Fraction = [Varuint, Varuint];
 export type BitcoinAddress = string;
 export type OutPointStr = string;
 export type RelativeOrAbsoluteBlockHeight = number;

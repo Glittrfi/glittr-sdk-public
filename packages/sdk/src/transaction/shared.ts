@@ -4,6 +4,7 @@ import {
   Fraction,
   RelativeOrAbsoluteBlockHeight,
   U128,
+  Varuint,
 } from "../utils";
 
 type VestingPlan =
@@ -20,29 +21,29 @@ export type OracleSetting = {
 
 export type RatioType =
   | {
-      fixed: {
-        ratio: Fraction;
-      };
-    }
-  | {
-      oracle: {
-        setting: OracleSetting;
-      };
+    fixed: {
+      ratio: Fraction;
     };
+  }
+  | {
+    oracle: {
+      setting: OracleSetting;
+    };
+  };
 
 export type InputAsset =
-  | "raw_btc"
+  | { raw_btc: {} }
   | { glittr_asset: BlockTxTuple }
-  | "rune"
-  | "ordinal";
+  | { rune: {} }
+  | { ordinal: {} };
 
 export type Preallocated = {
-  allocations: Record<U128, Pubkey[]>;
+  allocations: Record<any, Pubkey[]>;
   vesting_plan?: VestingPlan;
 };
 export type FreeMint = {
-  supply_cap?: U128;
-  amount_per_mint: U128;
+  supply_cap?: Varuint;
+  amount_per_mint: Varuint;
 };
 
 export type PurchaseBurnSwap = {
@@ -58,5 +59,5 @@ export type ArgsCommitment = {
 
 export type Commitment = {
   public_key: Pubkey;
-  args: ArgsCommitment 
+  args: ArgsCommitment
 }

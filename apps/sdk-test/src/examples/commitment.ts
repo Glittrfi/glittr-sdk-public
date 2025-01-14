@@ -9,6 +9,7 @@ import {
   txBuilder,
   BlockTxTuple,
   encryptMessage,
+  encodeVaruint,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
@@ -38,7 +39,7 @@ async function deployCommitmentFreeMintContract() {
           live_time: 0,
           mint_mechanism: {
             free_mint: {
-              amount_per_mint: "1"
+              amount_per_mint: encodeVaruint(1)
             }
           },
           commitment: {
@@ -73,7 +74,7 @@ async function deployCommitmentFreeMintContract() {
 
 async function mint() {
   // Contract from deployCommitmentFreeMintContract() result
-  const contract: BlockTxTuple = [187143, 1]
+  const contract: BlockTxTuple = [encodeVaruint(187143), encodeVaruint(1)]
 
   const creatorPubkey = new Uint8Array(creatorAccount.p2pkh().keypair.publicKey)
 
@@ -86,7 +87,7 @@ async function mint() {
       contract,
       call_type: {
         mint: {
-          pointer: 1,
+          pointer: encodeVaruint(1),
           commitment_message: {
             public_key: Array.from(creatorAccount.p2pkh().keypair.publicKey),
             args: Array.from(encryptedCommitment)
