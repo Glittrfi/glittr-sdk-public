@@ -1,6 +1,6 @@
 {
   "name": "@glittr-sdk/sdk",
-  "version": "0.25.2",
+  "version": "0.28.0",
   "private": false,
   "publishConfig": {
     "access": "public"
