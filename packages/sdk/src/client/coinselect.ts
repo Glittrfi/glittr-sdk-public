@@ -63,7 +63,8 @@ export async function coinSelect(
   apiKey: string,
   electrumApi: string,
   glittrApi: string,
-  changeOutputAddress?: string
+  changeOutputAddress?: string,
+  publicKey?: string,
 ) {
   let txBytes = getTransactionBytes(inputs, outputs);
   let totalInputValue = inputs.reduce((prev, input) => prev + input.value, 0);
@@ -96,7 +97,7 @@ export async function coinSelect(
 
   for (const utxo of utxos) {
     const assetString = await fetchGlittrAsset(utxo.txid, utxo.vout);
-    const asset = JSON.parse(JSON.parse(assetString));
+    const asset = JSON.parse(assetString);
     const assetIsEmpty =
       !asset.assets ||
       !asset.assets.list ||
@@ -225,6 +226,7 @@ export async function coinSelect(
   for (const utxo of inputs) {
     switch (addressType) {
       case AddressType.p2pkh:
+      case AddressType.p2sh:
         const txHex = await electrumFetchTxHex(electrumApi, apiKey, utxo.txid);
         utxoInputs.push({
           hash: utxo.txid,
