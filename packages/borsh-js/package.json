@@ -1,10 +1,14 @@
 {
   "name": "@glittr-sdk/borsh",
-  "version": "2.0.1",
+  "version": "2.2.0",
   "description": "Binary Object Representation Serializer for Hashing",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "types": "./lib/types/index.d.ts",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "lib",
     "LICENSE-APACHE",
