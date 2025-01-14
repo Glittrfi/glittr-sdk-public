@@ -28,7 +28,7 @@ async function deployFreemintCompress() {
     contract_creation: {
       contract_type: {
         moa: {
-          ticker: "FOX",
+          ticker: "FOXY",
           divisibility: 18,
           live_time: 0,
           supply_cap: encodeVaruint(BigInt(500000000)),

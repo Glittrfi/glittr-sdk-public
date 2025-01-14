@@ -1,4 +1,4 @@
-import { serialize } from "borsh";
+import { serialize } from "@glittr-sdk/borsh";
 import {
   ContractCallParams,
   ContractInstantiateParams,
@@ -179,6 +179,7 @@ class TxBuilderClass {
       }
 
       const encoded = serialize(schema, message as any)
+      console.log(encoded)
       const compressed = await compress(encoded)
 
       const glittrFlag = Buffer.from("GLITTR", "utf8"); // Prefix

@@ -27,7 +27,8 @@ export const FEE_TX_OUTPUT_TAPROOT = 34;
 export type CoinSelectParams = {};
 
 function _sumValues(data: BitcoinUTXO[] | Output[]) {
-  return data.reduce((prev, input) => prev + (input.value || 0), 0);
+  // @ts-ignore
+  return data?.reduce((prev: any, input: any) => prev + (input.value || 0), 0);
 }
 
 function _isTxContainsOnlyTransfer(tx: OpReturnMessage) {
