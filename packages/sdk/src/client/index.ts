@@ -17,6 +17,7 @@ export type CreateTxParams = {
   tx: OpReturnMessage;
   outputs?: Output[];
   utxos?: BitcoinUTXO[];
+  publicKey?: string;
 };
 
 export type CreateBroadcastTxParams = {
@@ -52,7 +53,13 @@ export class GlittrSDK {
     this.electrumApi = electrumApi;
   }
 
-  async createTx({ address, tx, outputs, utxos }: CreateTxParams): Promise<Psbt> {
+  async createTx({
+    address,
+    tx,
+    outputs,
+    utxos,
+    publicKey,
+  }: CreateTxParams): Promise<Psbt> {
     outputs = outputs ?? [];
     const addressType = getAddressType(address);
 
@@ -70,7 +77,8 @@ export class GlittrSDK {
       this.apiKey,
       this.electrumApi,
       this.glittrApi,
-      address
+      address,
+      publicKey
     );
 
     const _inputs = coins?.inputs ?? [];
@@ -81,6 +89,24 @@ export class GlittrSDK {
             hash: input.hash,
             index: input.index,
             nonWitnessUtxo: input.nonWitnessUtxo,
+          });
+          break;
+        case AddressType.p2sh:
+          // NOTE: P2SH-P2WPKH for xverse (nested segwit)
+          const decodedPublicKey = Buffer.from(publicKey!, "hex");
+          const p2wpkh = payments.p2wpkh({
+            pubkey: decodedPublicKey,
+            network: getBitcoinNetwork(this.network),
+          });
+          const p2sh = payments.p2sh({
+            redeem: p2wpkh,
+            network: getBitcoinNetwork(this.network),
+          });
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            nonWitnessUtxo: input.nonWitnessUtxo,
+            redeemScript: p2sh.redeem?.output,
           });
           break;
         case AddressType.p2wpkh:
@@ -104,10 +130,23 @@ export class GlittrSDK {
       }
     }
 
-    return psbt
+    return psbt;
   }
 
-  // broadcastTx() {}
+  async broadcastTx(hex: string) {
+    // Validate Glittr TX
+    const isValidGlittrTx = await fetchPOST(
+      `${this.glittrApi}/validate-tx`,
+      {},
+      hex
+    );
+    if (!isValidGlittrTx.is_valid)
+      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+
+    // Broadcast TX
+    const txId = await fetchPOST(`${this.electrumApi}/tx`, {}, hex);
+    return txId;
+  }
 
   async createAndBroadcastTx({
     account,
@@ -146,6 +185,7 @@ export class GlittrSDK {
     for (const input of _inputs) {
       switch (addressType) {
         case AddressType.p2pkh:
+        case AddressType.p2sh:
           psbt.addInput({
             hash: input.hash,
             index: input.index,
@@ -182,27 +222,23 @@ export class GlittrSDK {
     const hex = psbt.extractTransaction(true).toHex();
 
     // Validate Glittr TX
-    // const isValidGlittrTx = await fetchPOST(
-    //   `${this.glittrApi}/validate-tx`,
-    //   { "Content-Type": "application/json" },
-    //   hex
-    // );
-    // if (!isValidGlittrTx.is_valid)
-    //   throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
-
-    // Broadcast TX
-    const txId = await fetchPOST(
-      `${this.electrumApi}/tx`,
-      { Authorization: `Bearer ${this.apiKey}` },
+    const isValidGlittrTx = await fetchPOST(
+      `${this.glittrApi}/validate-tx`,
+      {},
       hex
     );
+    if (!isValidGlittrTx.is_valid)
+      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+
+    // Broadcast TX
+    const txId = await fetchPOST(`${this.electrumApi}/tx`, {}, hex);
     return txId;
   }
 
   async createAndBroadcastRawTx({
     account,
     inputs,
-    outputs
+    outputs,
   }: CreateAndBroadcastRawTxParams) {
     const addressType = getAddressType(account.address);
 
@@ -229,7 +265,7 @@ export class GlittrSDK {
         case AddressType.p2wpkh:
           const paymentOutput = payments.p2wpkh({
             address: account.address,
-            network: getBitcoinNetwork(this.network)
+            network: getBitcoinNetwork(this.network),
           }).output!;
           psbt.addInput({
             hash: input.txid,
@@ -237,7 +273,7 @@ export class GlittrSDK {
             witnessUtxo: {
               script: paymentOutput,
               value: input.value,
-            }
+            },
           });
           break;
       }
@@ -267,4 +303,3 @@ export class GlittrSDK {
     return txId;
   }
 }
-
