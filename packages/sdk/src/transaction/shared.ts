@@ -37,8 +37,17 @@ export type InputAsset =
   | { rune: {} }
   | { ordinal: {} };
 
+export type AllocationType =
+  | { vec_pubkey: Pubkey[] }
+  | {
+    bloom_filter: {
+      filter: number[],
+      arg: { tx_id: {} }
+    }
+  }
+
 export type Preallocated = {
-  allocations: Record<any, Pubkey[]>;
+  allocations: Map<Varuint, AllocationType>;
   vesting_plan?: VestingPlan;
 };
 export type FreeMint = {

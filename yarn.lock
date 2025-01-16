@@ -487,14 +487,6 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@dao-xyz/borsh@^5.2.3":
-  version "5.2.3"
-  resolved "https://registry.npmjs.org/@dao-xyz/borsh/-/borsh-5.2.3.tgz"
-  integrity sha512-W4iG53Wp7V6vtQhnuOhB3I6U6C0409gDG9eWBBA0hBbM8+hNFilZ0y0ePTOs5DS/n+J8vHS9Rsyb5fHGdUu9Qg==
-  dependencies:
-    "@protobufjs/float" "^1.0.2"
-    "@protobufjs/utf8" "^1.1.0"
-
 "@eslint-community/eslint-utils@^4.2.0", "@eslint-community/eslint-utils@^4.4.0":
   version "4.4.1"
   resolved "https://registry.npmjs.org/@eslint-community/eslint-utils/-/eslint-utils-4.4.1.tgz"
@@ -546,7 +538,7 @@
     regtest-client "^0.2.1"
 
 "@glittr-sdk/sdk@*", "@glittr-sdk/sdk@file:/Users/edowahdana/glittr/sdk/packages/sdk":
-  version "0.27.3-beta.0"
+  version "0.27.4-beta.0"
   resolved "file:packages/sdk"
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.1.1"
@@ -1791,23 +1783,6 @@ bip174@^2.1.1:
   version "2.1.1"
   resolved "https://registry.npmjs.org/bip174/-/bip174-2.1.1.tgz"
   integrity sha512-mdFV5+/v0XyNYXjBS6CQPLo9ekCx4gtKZFnJm5PMto7Fs9hTTDpkkzOB7/FtluRI6JbUUAu+snTYfJRgHLZbZQ==
-
-bip32@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.npmjs.org/bip32/-/bip32-4.0.0.tgz"
-  integrity sha512-aOGy88DDlVUhspIXJN+dVEtclhIsfAUppD43V0j40cPTld3pv/0X/MlrZSZ6jowIaQQzFwP8M6rFU2z2mVYjDQ==
-  dependencies:
-    "@noble/hashes" "^1.2.0"
-    "@scure/base" "^1.1.1"
-    typeforce "^1.11.5"
-    wif "^2.0.6"
-
-bip39@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.npmjs.org/bip39/-/bip39-3.1.0.tgz"
-  integrity sha512-c9kiwdk45Do5GL0vJMe7tS95VjCii65mYAH7DfWl3uW8AVzXKQVUm64i3hzVybBDMp9r7j9iNxR85+ul8MdN/A==
-  dependencies:
-    "@noble/hashes" "^1.2.0"
 
 bitcoin-address-validation@^2.2.3:
   version "2.2.3"
@@ -5138,7 +5113,7 @@ optionator@^0.9.3:
     type-check "^0.4.0"
     word-wrap "^1.2.5"
 
-ora@*, ora@^8.1.0:
+ora@*:
   version "8.1.1"
   resolved "https://registry.npmjs.org/ora/-/ora-8.1.1.tgz"
   integrity sha512-YWielGi1XzG1UTvOaCFaNgEnuhZVMSHYkW/FQ7UX8O26PtlpdM84c0f7wLPlkvx2RfiQmnzd61d/MGxmpQeJPw==
@@ -5534,15 +5509,6 @@ regjsparser@^0.10.0:
   integrity sha512-qx+xQGZVsy55CH0a1hiVwHmqjLryfh7wQyF5HO07XJ9f7dQMY/gPQHhlyDkIzJKC+x2fUCpCcUODUUUFrm7SHA==
   dependencies:
     jsesc "~0.5.0"
-
-regtest-client@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.npmjs.org/regtest-client/-/regtest-client-0.2.1.tgz"
-  integrity sha512-cQJimW+CBj3Mq9s/agVxvGxMCHpv+G1PpTRcXoPKbh6tpaQywcg8wRMRsS7bucv9j2k+hD2KT1skov1s9ftvVA==
-  dependencies:
-    bs58check "^2.1.2"
-    dhttp "^3.0.3"
-    randombytes "^2.1.0"
 
 remove-trailing-separator@^1.0.1:
   version "1.1.0"

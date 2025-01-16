@@ -1,3 +1,4 @@
+import { serialize } from "@glittr-sdk/borsh";
 import {
   Account,
   GlittrSDK,
@@ -10,7 +11,10 @@ import {
   txBuilder,
   BlockTxTuple,
   encodeVaruint,
+  schema,
+  Varuint,
 } from "@glittr-sdk/sdk";
+import { AllocationType } from "@glittr-sdk/sdk/dist/transaction/shared";
 
 const NETWORK = "regtest";
 const client = new GlittrSDK({
@@ -41,32 +45,33 @@ async function deployVestingContract() {
     reserveAccount.p2pkh().keypair.publicKey
   );
 
+  const allocations = new Map<Varuint, AllocationType>()
+  allocations.set(encodeVaruint(200), {vec_pubkey: [receiver1PublicKey]})
+  allocations.set(encodeVaruint(400), {vec_pubkey: [receiver2PublicKey]})
+
   const quarterlyVesting: [Fraction, number][] = [
-    [[encodeVaruint(25), encodeVaruint(100)], -1], // 25% unlocked after 1 blocks
-    [[encodeVaruint(25), encodeVaruint(100)], -2], // 25% unlocked after 2 blocks
-    [[encodeVaruint(25), encodeVaruint(100)], -3], // 25% unlocked after 3 blocks
-    [[encodeVaruint(25), encodeVaruint(100)], -4], // 25% unlocked after 4 blocks
+    [[encodeVaruint(1), encodeVaruint(4)], -4], // 1% unlocked after 1 blocks
+    [[encodeVaruint(1), encodeVaruint(4)], -3], // 1% unlocked after 2 blocks
+    [[encodeVaruint(1), encodeVaruint(4)], -2], // 1% unlocked after 3 blocks
+    [[encodeVaruint(1), encodeVaruint(4)], -1], // 1% unlocked after 4 blocks
   ];
 
   const tx: OpReturnMessage = {
     contract_creation: {
       contract_type: {
         moa: {
-          divisibility: 100,
+          divisibility: 18,
           live_time: 0,
           supply_cap: encodeVaruint(1000),
           mint_mechanism: {
             preallocated: {
-              allocations: {
-                "100": [receiver1PublicKey],
-                "200": [receiver2PublicKey]
-              },
+              allocations: allocations,
               vesting_plan: {
                 scheduled: quarterlyVesting
               }
             },
             free_mint: {
-              supply_cap: encodeVaruint(700),
+              supply_cap: encodeVaruint(400),
               amount_per_mint: encodeVaruint(1),
             }
           }
@@ -74,6 +79,10 @@ async function deployVestingContract() {
       }
     }
   }
+
+  const serialized = serialize(schema, tx)
+  console.log(serialized)
+  return
 
   const address = account.p2pkh().address
   const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
