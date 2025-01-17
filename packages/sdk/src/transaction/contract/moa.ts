@@ -8,7 +8,13 @@ export type MOAMintMechanism = {
 };
 
 export type MintOnlyAssetContract = {
-  ticker?: string;
+  ticker?: {
+    number: Uint8Array;
+    spacers: Uint8Array;
+  } | {
+    number: Uint8Array;
+    spacers?: undefined;
+  };
   supply_cap?: Varuint;
   divisibility: number;
   live_time: BlockHeight;

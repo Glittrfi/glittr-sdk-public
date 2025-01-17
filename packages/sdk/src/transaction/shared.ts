@@ -9,7 +9,7 @@ import {
 
 type VestingPlan =
   | { timelock: RelativeOrAbsoluteBlockHeight }
-  | { scheduled: Array<[Fraction, RelativeOrAbsoluteBlockHeight]> };
+  | { scheduled: Array<{ ratio: Varuint[], tolerance: number }> };
 
 export type OracleSetting = {
   pubkey: Pubkey;
@@ -62,7 +62,13 @@ export type PurchaseBurnSwap = {
 };
 
 export type ArgsCommitment = {
-  fixed_string: string;
+  fixed_string: {
+    number: Uint8Array;
+    spacers: Uint8Array;
+  } | {
+    number: Uint8Array;
+    spacers?: undefined;
+  };
   string: string
 }
 

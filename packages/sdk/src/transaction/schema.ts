@@ -27,7 +27,14 @@ export const schema: any = {
                   struct: {
                     moa: {
                       struct: {
-                        ticker: { option: 'string' },
+                        ticker: {
+                          option: {
+                            struct: {
+                              number: { array: { type: 'u8' } },
+                              spacers: { option: { array: { type: 'u8' } } }
+                            }
+                          }
+                        },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
                         divisibility: 'u8',
                         live_time: 'i64',
@@ -37,7 +44,7 @@ export const schema: any = {
                             preallocated: {
                               option: {
                                 struct: {
-                                  allocations: {
+                                  allocations: { // TODO, lacking 8 bytes compared to Core (from HashMap..??)
                                     map: {
                                       key: { array: { type: 'u8' } }, // VARUINT
                                       value: {
@@ -61,11 +68,24 @@ export const schema: any = {
                                       }
                                     }
                                   },
-                                  vesting_plan: {
+                                  vesting_plan: { // TODO, length of array is also encoded in Core
                                     option: {
                                       enum: [
                                         { struct: { timelock: 'i64' } },
-                                        { struct: { scheduled: { array: { type: { struct: {} } } } } } // TODO
+                                        {
+                                          struct: {
+                                            scheduled: {
+                                              array: {
+                                                type: {
+                                                  struct: {
+                                                    ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } },
+                                                    tolerance: 'i64'
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
                                       ]
                                     }
                                   }
@@ -130,7 +150,14 @@ export const schema: any = {
                               public_key: { array: { type: 'u8' } },
                               args: {
                                 struct: {
-                                  fixed_string: 'string',
+                                  fixed_string: {
+                                    option: {
+                                      struct: {
+                                        number: { array: { type: 'u8' } },
+                                        spacers: { option: { array: { type: 'u8' } } }
+                                      }
+                                    }
+                                  },
                                   string: 'string'
                                 }
                               }
@@ -145,7 +172,14 @@ export const schema: any = {
                   struct: {
                     mba: {
                       struct: {
-                        ticker: { option: 'string' },
+                        ticker: {
+                          option: {
+                            struct: {
+                              number: { array: { type: 'u8' } },
+                              spacers: { option: { array: { type: 'u8' } } }
+                            }
+                          }
+                        },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
                         divisibility: 'u8',
                         live_time: 'i64',
@@ -155,7 +189,7 @@ export const schema: any = {
                             preallocated: {
                               option: {
                                 struct: {
-                                  allocations: {
+                                  allocations: { // TODO, lacking 8 bytes compared to Core (from HashMap..??)
                                     map: {
                                       key: { array: { type: 'u8' } }, // VARUINT
                                       value: {
@@ -179,11 +213,24 @@ export const schema: any = {
                                       }
                                     }
                                   },
-                                  vesting_plan: {
+                                  vesting_plan: { // TODO, length of array is also encoded in Core
                                     option: {
                                       enum: [
                                         { struct: { timelock: 'i64' } },
-                                        { struct: { scheduled: { array: { type: { struct: {} } } } } } // TODO
+                                        {
+                                          struct: {
+                                            scheduled: {
+                                              array: {
+                                                type: {
+                                                  struct: {
+                                                    ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } },
+                                                    tolerance: 'i64'
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
                                       ]
                                     }
                                   }
@@ -368,7 +415,14 @@ export const schema: any = {
                               public_key: { array: { type: 'u8' } },
                               args: {
                                 struct: {
-                                  fixed_string: 'string',
+                                  fixed_string: {
+                                    option: {
+                                      struct: {
+                                        number: { array: { type: 'u8' } },
+                                        spacers: { option: { array: { type: 'u8' } } }
+                                      }
+                                    }
+                                  },
                                   string: 'string'
                                 }
                               }

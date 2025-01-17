@@ -49,12 +49,12 @@ async function deployVestingContract() {
   allocations.set(encodeVaruint(200), {vec_pubkey: [receiver1PublicKey]})
   allocations.set(encodeVaruint(400), {vec_pubkey: [receiver2PublicKey]})
 
-  const quarterlyVesting: [Fraction, number][] = [
-    [[encodeVaruint(1), encodeVaruint(4)], -4], // 1% unlocked after 1 blocks
-    [[encodeVaruint(1), encodeVaruint(4)], -3], // 1% unlocked after 2 blocks
-    [[encodeVaruint(1), encodeVaruint(4)], -2], // 1% unlocked after 3 blocks
-    [[encodeVaruint(1), encodeVaruint(4)], -1], // 1% unlocked after 4 blocks
-  ];
+  const quarterlyVesting = [
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -4 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -3 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -2 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -1 },
+  ]
 
   const tx: OpReturnMessage = {
     contract_creation: {
@@ -65,7 +65,7 @@ async function deployVestingContract() {
           supply_cap: encodeVaruint(1000),
           mint_mechanism: {
             preallocated: {
-              allocations: allocations,
+              allocations,
               vesting_plan: {
                 scheduled: quarterlyVesting
               }

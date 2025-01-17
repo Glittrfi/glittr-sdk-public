@@ -9,10 +9,10 @@ import { TxTypeTransfer } from "./transfer/types";
  * Contract Instantiate
  */
 export type ContractInstantiateParams = {
-  amount_per_mint?: Varuint;
+  amount_per_mint?: string;
   divisibility: number;
   live_time: BlockHeight;
-  supply_cap?: Varuint;
+  supply_cap?: string;
   ticker?: string;
   mint_mechanism: MBAMintMechanism
   burn_mechanism?: BurnMechanism
@@ -26,10 +26,10 @@ export type ContractInstantiateFormat = {
  * Free Mint contract init
  */
 export type FreeMintContractParams = {
-  amount_per_mint: Varuint;
+  amount_per_mint: string;
   divisibility: number;
   live_time: BlockHeight;
-  supply_cap: Varuint;
+  supply_cap: string;
   ticker: string;
 };
 export type FreeMintContractInstantiateFormat = {
@@ -43,7 +43,7 @@ export type FreeMintContractInstantiateFormat = {
 export type PaidMintContractParams = {
   divisibility: number;
   live_time: BlockHeight;
-  supply_cap: Varuint;
+  supply_cap: string;
   ticker: string;
   payment: {
     input_asset: InputAsset,
@@ -62,7 +62,7 @@ export type PaidMintContractInstantiateFormat = {
 export type CreatePoolContractParams = {
   divisibility: number;
   live_time: BlockHeight;
-  supply_cap: Varuint;
+  supply_cap: string;
   assets: [InputAsset, InputAsset],
   invariant: number,
   initial_mint_restriction?: number

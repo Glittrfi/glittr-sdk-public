@@ -10,6 +10,7 @@ import {
   BlockTxTuple,
   encryptMessage,
   encodeVaruint,
+  encodeBase26,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
@@ -45,7 +46,7 @@ async function deployCommitmentFreeMintContract() {
           commitment: {
             public_key: Array.from(creatorAccount.p2pkh().keypair.publicKey),
             args: {
-              fixed_string: "GLITTRAIRDROP",
+              fixed_string: encodeBase26("GLITTRAIRDROP"),
               string: "username"
             }
           }

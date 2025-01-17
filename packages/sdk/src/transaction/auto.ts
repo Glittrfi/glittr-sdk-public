@@ -1,4 +1,4 @@
-import { BitcoinUTXO, BlockTxTuple, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
+import { BitcoinUTXO, BlockTxTuple, encodeBase26, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
 import { Account } from "../account";
 import { GlittrSDK } from "../client";
 import { getAssetTickers, getAssetUtxos } from "../helper/asset";
@@ -97,7 +97,7 @@ class ContractDeployment {
             },
             burn_mechanism: {},
             swap_mechanism: {},
-            ticker: assetTickers.join('-')
+            ticker: encodeBase26(assetTickers.join('-'))
           }
         }
       },
@@ -149,7 +149,7 @@ class ContractDeployment {
             divisibility,
             live_time: 0,
             supply_cap: _supplyCap,
-            ticker,
+            ticker: encodeBase26(ticker),
             mint_mechanism: { free_mint: { amount_per_mint: encodeVaruint(amountPerMint), supply_cap: _supplyCap } }
           }
         },
@@ -184,7 +184,7 @@ class ContractDeployment {
             divisibility,
             live_time: 0,
             supply_cap: _supplyCap,
-            ticker,
+            ticker: encodeBase26(ticker),
             mint_mechanism: {
               purchase: {
                 input_asset: mechanism.input_asset,
