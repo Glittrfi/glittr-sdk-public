@@ -26,6 +26,7 @@ export const FEE_TX_OUTPUT_TAPROOT = 34;
 export type CoinSelectParams = {};
 
 function _sumValues(data: BitcoinUTXO[] | Output[]) {
+  // @ts-ignore
   return data.reduce((prev, input) => prev + (input.value || 0), 0);
 }
 
@@ -242,6 +243,18 @@ export async function coinSelect(
             value: utxo.value,
           },
         });
+        break;
+      case AddressType.p2tr: 
+        const p2trOutput = payments.p2tr({address, network}).output!;
+        utxoInputs.push({
+          hash: utxo.txid,
+          index: utxo.vout,
+          witnessUtxo: {
+            script: p2trOutput,
+            value: utxo.value,
+          },
+          tapInternalKey: publicKey ? Buffer.from(publicKey) : undefined
+        })
         break;
     }
   }

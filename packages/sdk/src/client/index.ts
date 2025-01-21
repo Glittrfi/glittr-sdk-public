@@ -116,6 +116,14 @@ export class GlittrSDK {
             witnessUtxo: input.witnessUtxo,
           });
           break;
+        case AddressType.p2tr:
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            witnessUtxo: input.witnessUtxo,
+            tapInternalKey: input.tapInternalKey
+          })
+          break;
         default:
           throw new Error(`Error Address Type not supported yet`);
       }
@@ -198,6 +206,14 @@ export class GlittrSDK {
             index: input.index,
             witnessUtxo: input.witnessUtxo,
           });
+          break;
+        case AddressType.p2tr:
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            witnessUtxo: input.witnessUtxo,
+            tapInternalKey: input.tapInternalKey
+          })
           break;
         default:
           throw new Error(`Error Address Type not supported yet`);
