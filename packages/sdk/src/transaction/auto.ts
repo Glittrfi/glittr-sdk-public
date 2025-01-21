@@ -24,10 +24,10 @@ class ContractDeployment {
   }
 
   async liquidityPoolInitiate(inputAsset: [string, string], inputAmount: [string, string]) {
-    const assetTickers = await getAssetTickers(this.client.apiKey, inputAsset);
-    const asset1Utxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, inputAsset[0]);
-    const asset2Utxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, inputAsset[1]);
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const assetTickers = await getAssetTickers(this.client, inputAsset);
+    const asset1Utxos = await getAssetUtxos(this.client, this.account.p2wpkh().address, inputAsset[0]);
+    const asset2Utxos = await getAssetUtxos(this.client, this.account.p2wpkh().address, inputAsset[1]);
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
 
     // Accumulate UTXOs and track excess
     let asset1Total = BigInt(0);
@@ -156,7 +156,7 @@ class ContractDeployment {
       },
     };
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
     const nonFeeInputs: BitcoinUTXO[] = []
     const nonFeeOutputs: Output[] = [
       { script: txBuilder.compile(tx), value: 0 },
@@ -197,7 +197,7 @@ class ContractDeployment {
       },
     };
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
     const nonFeeInputs: BitcoinUTXO[] = []
     const nonFeeOutputs: Output[] = [
       { script: txBuilder.compile(tx), value: 0 },
@@ -241,7 +241,7 @@ class ContractCall {
       },
     };
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
     const nonFeeInputs: BitcoinUTXO[] = []
     const nonFeeOutputs: Output[] = [
       { script: txBuilder.compile(tx), value: 0 },
@@ -288,12 +288,12 @@ export class GlittrTransaction {
       });
     });
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
 
     const nonFeeInputs: BitcoinUTXO[] = []
     for (const transfer of transfers) {
       const assetRequired = BigInt(transfer.amount)
-      const assetUtxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, transfer.contractId)
+      const assetUtxos = await getAssetUtxos(this.client, this.account.p2wpkh().address, transfer.contractId)
       let assetTotal = BigInt(0)
 
       for (const utxo of assetUtxos) {

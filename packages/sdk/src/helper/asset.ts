@@ -1,8 +1,9 @@
+import { GlittrSDK } from "../client";
 import { BalanceData } from "../client/types";
 import { fetchGET } from "../utils/fetch";
 
 // TODO change hardcode api url 
-export const getAssetTickers = async (apiKey: string, assets: string[]): Promise<string[]> => {
+export const getAssetTickers = async (client: GlittrSDK, assets: string[]): Promise<string[]> => {
   try {
     return await Promise.all(
       assets.map(async (asset) => {
@@ -18,8 +19,8 @@ export const getAssetTickers = async (apiKey: string, assets: string[]): Promise
 
         try {
           const metadataData = await fetchGET(
-            `https://devnet-core-api.glittr.fi/blocktx/${block}/${txIndex}`,
-            { Authorization: `Bearer ${apiKey}` }
+            `${client.glittrApi}/blocktx/${block}/${txIndex}`,
+            { Authorization: `Bearer ${client.apiKey}` }
           )
           if (!metadataData?.is_valid) {
             throw new Error(`Invalid metadata for asset ${block}:${txIndex}`);
@@ -49,12 +50,12 @@ export const getAssetTickers = async (apiKey: string, assets: string[]): Promise
   }
 }
 
-export const getAssetUtxos = async (apiKey: string, address: string, asset: string) => {
+export const getAssetUtxos = async (client: GlittrSDK, address: string, asset: string) => {
   try {
     // Fetch asset balance data
     const balanceData = await fetchGET(
-      `https://devnet-core-api.glittr.fi/helper/address/${address}/balance`,
-      { Authorization: `Bearer ${apiKey}` }
+      `${client.glittrApi}/helper/address/${address}/balance`,
+      { Authorization: `Bearer ${client.apiKey}` }
     ) as BalanceData
     if (!balanceData?.balance?.utxos) {
       throw new Error('Invalid balance data format');
@@ -62,8 +63,8 @@ export const getAssetUtxos = async (apiKey: string, address: string, asset: stri
 
     // Fetch UTXO values from electrum
     const utxoValuesData = await fetchGET(
-      `https://devnet-electrum.glittr.fi/address/${address}/utxo`,
-      { Authorization: `Bearer ${apiKey}` }
+      `${client.electrumApi}/address/${address}/utxo`,
+      { Authorization: `Bearer ${client.apiKey}` }
     ) as Array<{
       txid: string;
       vout: number;
@@ -104,11 +105,11 @@ export const getAssetUtxos = async (apiKey: string, address: string, asset: stri
   }
 }
 
-export const getGlittrAsset = async (apiKey: string, txid: string, vout: number) => {
+export const getGlittrAsset = async (client: GlittrSDK, txid: string, vout: number) => {
   try {
     const asset = await fetchGET(
-      `https://devnet-core-api.glittr.fi/assets/${txid}/${vout}`,
-      { Authorization: `Bearer ${apiKey}` }
+      `${client.glittrApi}/assets/${txid}/${vout}`,
+      { Authorization: `Bearer ${client.apiKey}` }
     )
     return JSON.stringify(asset)
   }

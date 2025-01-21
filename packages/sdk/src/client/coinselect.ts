@@ -6,6 +6,8 @@ import { OpReturnMessage } from "../transaction";
 import { electrumFetchTxHex, electrumFetchNonGlittrUtxos } from "../utils/electrum";
 import { getInputBytes, getOutputBytes, getTransactionBytes } from "../helper/fee";
 import { fetchGET } from "../utils/fetch";
+import { getBitcoinNetwork } from "../utils";
+import { GlittrSDK } from ".";
 
 export const FEE_TX_EMPTY_SIZE = 4 + 1 + 1 + 4;
 
@@ -26,6 +28,7 @@ export const FEE_TX_OUTPUT_TAPROOT = 34;
 export type CoinSelectParams = {};
 
 function _sumValues(data: BitcoinUTXO[] | Output[]) {
+  // @ts-ignore
   return data.reduce((prev, input) => prev + (input.value || 0), 0);
 }
 
@@ -53,15 +56,12 @@ function _isTxContainsMintContractCall(tx: OpReturnMessage) {
 }
 
 export async function coinSelect(
-  network: networks.Network,
+  client: GlittrSDK,
   inputs: BitcoinUTXO[],
   outputs: Output[],
   feeRate: number,
   address: string,
   tx: OpReturnMessage,
-  apiKey: string,
-  electrumApi: string,
-  glittrApi: string,
   changeOutputAddress?: string,
   publicKey?: string,
 ) {
@@ -77,13 +77,13 @@ export async function coinSelect(
   //   return;
   // }
 
-  const utxos = await electrumFetchNonGlittrUtxos(electrumApi, apiKey, address);
+  const utxos = await electrumFetchNonGlittrUtxos(client, address);
 
   const fetchGlittrAsset = async (txId: string, vout: number) => {
     try {
       const asset = await fetchGET(
-        `${glittrApi}/assets/${txId}/${vout}`,
-        { Authorization: `Bearer ${apiKey}` },
+        `${client.glittrApi}/assets/${txId}/${vout}`,
+        { Authorization: `Bearer ${client.apiKey}` },
       )
       return JSON.stringify(asset);
     } catch (e) {
@@ -225,7 +225,7 @@ export async function coinSelect(
     switch (addressType) {
       case AddressType.p2pkh:
       case AddressType.p2sh:
-        const txHex = await electrumFetchTxHex(electrumApi, apiKey, utxo.txid);
+        const txHex = await electrumFetchTxHex(client.electrumApi, client.apiKey, utxo.txid);
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -233,7 +233,7 @@ export async function coinSelect(
         });
         break;
       case AddressType.p2wpkh:
-        const paymentOutput = payments.p2wpkh({ address, network }).output!;
+        const paymentOutput = payments.p2wpkh({ address, network: getBitcoinNetwork(client.network) }).output!;
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,

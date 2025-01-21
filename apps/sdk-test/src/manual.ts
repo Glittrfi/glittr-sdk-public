@@ -26,7 +26,7 @@ async function deployFreeMintContract() {
     },
   };
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, account.p2wpkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, account.p2wpkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }

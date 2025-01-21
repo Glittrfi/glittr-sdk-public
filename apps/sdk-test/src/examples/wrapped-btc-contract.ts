@@ -67,7 +67,7 @@ async function deployWbtcContract() {
   }
 
   const address = creatorAccount.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }, // Output #0 should always be OP_RETURN
@@ -101,7 +101,7 @@ async function mint() {
   }
 
   const address = minterAccount.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }, // Output #0 should always be OP_RETURN
