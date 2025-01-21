@@ -5,7 +5,8 @@ export type BoolType = 'bool';
 export type StringType = 'string';
 
 export type OptionType = { option: Schema };
-export type ArrayType = { array: { type: Schema, len?: number } };
+export type ArrayType = { array: { type: Schema, len?: number, showLen?: boolean} };
+export type ArrayUnknownType = { array: { type: Schema, len?: boolean } };
 export type EnumType = { enum: Array<StructType> };
 export type SetType = { set: Schema };
 export type MapType = { map: { key: Schema, value: Schema } };

@@ -50,7 +50,7 @@ export const schema: any = {
                                       value: {
                                         enum: [
                                           {
-                                            struct: { vec_pubkey: { array: { type: { array: { type: 'u8' } } } } },
+                                            struct: { vec_pubkey: { array: { type: { array: { type: 'u8', showLen: true } }, showLen: true } } },
                                           },
                                           {
                                             struct: {
@@ -81,7 +81,8 @@ export const schema: any = {
                                                     ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } },
                                                     tolerance: 'i64'
                                                   }
-                                                }
+                                                },
+                                                showLen: true
                                               }
                                             }
                                           }
@@ -195,7 +196,7 @@ export const schema: any = {
                                       value: {
                                         enum: [
                                           {
-                                            struct: { vec_pubkey: { array: { type: { array: { type: 'u8' } } } } },
+                                            struct: { vec_pubkey: { array: { type: { array: { type: 'u8', showLen: true } }, showLen: true } } },
                                           },
                                           {
                                             struct: {
@@ -226,7 +227,8 @@ export const schema: any = {
                                                     ratio: { array: { type: { array: { type: 'u8' } }, len: 2 } },
                                                     tolerance: 'i64'
                                                   }
-                                                }
+                                                },
+                                                showLen: true
                                               }
                                             }
                                           }

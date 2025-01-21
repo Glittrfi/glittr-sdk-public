@@ -519,8 +519,8 @@
   resolved "https://registry.npmjs.org/@eslint/js/-/js-8.57.1.tgz"
   integrity sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==
 
-"@glittr-sdk/borsh@^2.2.0", "@glittr-sdk/borsh@file:/Users/edowahdana/glittr/sdk/packages/borsh-js":
-  version "2.2.0"
+"@glittr-sdk/borsh@^2.4.0", "@glittr-sdk/borsh@file:/Users/edowahdana/glittr/sdk/packages/borsh-js":
+  version "2.4.0"
   resolved "file:packages/borsh-js"
 
 "@glittr-sdk/eslint-config@*", "@glittr-sdk/eslint-config@file:/Users/edowahdana/glittr/sdk/packages/eslint-config":
@@ -532,27 +532,22 @@
   resolved "file:apps/sdk-test"
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.1.1"
+    "@glittr-sdk/borsh" "^2.4.0"
     bitcoinjs-lib "^6.1.5"
     ecpair "^2.1.0"
-    ora "^8.1.0"
-    regtest-client "^0.2.1"
 
 "@glittr-sdk/sdk@*", "@glittr-sdk/sdk@file:/Users/edowahdana/glittr/sdk/packages/sdk":
   version "0.27.4-beta.0"
   resolved "file:packages/sdk"
   dependencies:
     "@bitcoinerlab/secp256k1" "^1.1.1"
-    "@dao-xyz/borsh" "^5.2.3"
-    "@glittr-sdk/borsh" "^2.2.0"
+    "@glittr-sdk/borsh" "^2.4.0"
     "@noble/curves" "^1.8.0"
     "@noble/hashes" "^1.7.0"
     aes-gcm "^0.0.1"
-    bip32 "^4.0.0"
-    bip39 "^3.1.0"
     bitcoin-address-validation "^2.2.3"
     bitcoinjs-lib "^6.1.5"
     brotli-compress "^1.3.3"
-    cross-fetch "^4.0.0"
     ecpair "^2.1.0"
 
 "@glittr-sdk/typescript-config@*", "@glittr-sdk/typescript-config@file:/Users/edowahdana/glittr/sdk/packages/typescript-config":
