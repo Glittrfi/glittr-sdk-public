@@ -609,7 +609,7 @@ export const schema: any = {
                             signature: { array: { type: 'u8' } },
                             message: {
                               struct: {
-                                input_outpoint: { option: { struct: { 0: { array: { type: 'u8' } } } } }, // TODO
+                                input_outpoint: { option: { struct: { txid: 'string', vout: 'u32' } } }, // TODO
                                 min_in_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 out_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 asset_id: { option: 'string' },
@@ -655,7 +655,7 @@ export const schema: any = {
                             signature: { array: { type: 'u8' } },
                             message: {
                               struct: {
-                                input_outpoint: { option: { struct: { 0: { array: { type: 'u8' } } } } }, // TODO
+                                input_outpoint: { option: { struct: { txid: 'string', vout: 'u32' } } }, // TODO
                                 min_in_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 out_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 asset_id: { option: 'string' },
