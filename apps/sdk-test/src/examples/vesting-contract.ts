@@ -16,7 +16,7 @@ const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
   apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
-  glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+  glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
 
@@ -79,7 +79,7 @@ async function deployVestingContract() {
   const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
-    { script: txBuilder.compile(tx), value: 0 }, // Output #0 should always be OP_RETURN
+    { script: await txBuilder.compress(tx), value: 0 }, // Output #0 should always be OP_RETURN
     { address: address, value: 546 }
   ]
 

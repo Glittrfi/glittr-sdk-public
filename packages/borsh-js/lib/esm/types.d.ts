@@ -9,6 +9,13 @@ export type ArrayType = {
     array: {
         type: Schema;
         len?: number;
+        showLen?: boolean;
+    };
+};
+export type ArrayUnknownType = {
+    array: {
+        type: Schema;
+        len?: boolean;
     };
 };
 export type EnumType = {
