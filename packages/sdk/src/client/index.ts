@@ -116,11 +116,12 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
+          const tapInternalKeyXOnly = input.tapInternalKey!.slice(1, 33)
           psbt.addInput({
             hash: input.hash,
             index: input.index,
             witnessUtxo: input.witnessUtxo,
-            tapInternalKey: input.tapInternalKey
+            tapInternalKey: tapInternalKeyXOnly
           })
           break;
         default:
@@ -179,7 +180,8 @@ export class GlittrSDK {
       this.apiKey,
       this.electrumApi,
       this.glittrApi,
-      account.address
+      account.address,
+      account.keypair.publicKey.toString('hex')
     );
 
     // Hacky: If the embeded tx is different from the tx passed in, change the opreturn to the tx from coinselect
