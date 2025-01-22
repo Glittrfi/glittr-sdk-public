@@ -291,6 +291,17 @@ export class GlittrSDK {
             },
           });
           break;
+        case AddressType.p2tr:
+          const p2trOutput = payments.p2tr({ address: account.address, network: getBitcoinNetwork(this.network) }).output!
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: p2trOutput,
+              value: input.value
+            },
+            tapInternalKey: account.keypair.publicKey
+          })
       }
     }
 
@@ -318,7 +329,7 @@ export class GlittrSDK {
     );
     if (!isValidGlittrTx.is_valid)
       throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
-      // console.error(`Invalid Glittr TX Format : ${isValidGlittrTx}`)
+    // console.error(`Invalid Glittr TX Format : ${isValidGlittrTx}`)
 
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,

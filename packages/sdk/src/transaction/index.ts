@@ -179,7 +179,6 @@ class TxBuilderClass {
       }
 
       const encoded = serialize(schema, message as any)
-      console.log(encoded)
       const compressed = await compress(encoded)
 
       const glittrFlag = Buffer.from("GLITTR", "utf8"); // Prefix

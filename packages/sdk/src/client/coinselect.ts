@@ -246,8 +246,8 @@ export async function coinSelect(
           },
         });
         break;
-      case AddressType.p2tr: 
-        const p2trOutput = payments.p2tr({address, network}).output!;
+      case AddressType.p2tr:
+        const p2trOutput = payments.p2tr({ address, network }).output!;
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -255,7 +255,7 @@ export async function coinSelect(
             script: p2trOutput,
             value: utxo.value,
           },
-          tapInternalKey: publicKey ? Buffer.from(publicKey) : undefined
+          tapInternalKey: publicKey ? Buffer.from(publicKey, 'hex') : undefined
         })
         break;
     }
