@@ -3,7 +3,7 @@ import { Network } from "../types";
 import { ecpair } from "../utils/ecpair";
 import { payments } from "bitcoinjs-lib";
 import { getBitcoinNetwork } from "../utils/network";
-import { P2pkhAccount, P2wpkhAccount } from "./types";
+import { P2pkhAccount, P2trAccount, P2wpkhAccount } from "./types";
 
 export type AccountParams = {
   privateKey?: string;
@@ -53,6 +53,18 @@ export class Account {
 
     return {
       address: p2wpkhPayments.address!,
+      keypair: this.keypair,
+    };
+  }
+
+  p2tr(): P2trAccount {
+    const p2trPayments = payments.p2tr({
+      internalPubkey: this.keypair.publicKey.slice(1, 33), // Remove the first byte and take 32 bytes
+      network: getBitcoinNetwork(this.network),
+    });
+
+    return {
+      address: p2trPayments.address!,
       keypair: this.keypair,
     };
   }

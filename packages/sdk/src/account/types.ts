@@ -10,4 +10,9 @@ export type P2wpkhAccount = {
     keypair: ECPairInterface
 }
 
-export type Account = P2pkhAccount | P2wpkhAccount
+export type P2trAccount = {
+    address: string,
+    keypair: ECPairInterface
+}
+
+export type Account = P2pkhAccount | P2wpkhAccount | P2trAccount
