@@ -9,6 +9,7 @@ import {
   addFeeToTx,
   txBuilder,
   BlockTxTuple,
+  encodeVaruint,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
@@ -41,10 +42,10 @@ async function deployVestingContract() {
   );
 
   const quarterlyVesting: [Fraction, number][] = [
-    [[25, 100], -1], // 25% unlocked after 1 blocks
-    [[25, 100], -2], // 25% unlocked after 2 blocks
-    [[25, 100], -3], // 25% unlocked after 3 blocks
-    [[25, 100], -4], // 25% unlocked after 4 blocks
+    [[encodeVaruint(25), encodeVaruint(100)], -1], // 25% unlocked after 1 blocks
+    [[encodeVaruint(25), encodeVaruint(100)], -2], // 25% unlocked after 2 blocks
+    [[encodeVaruint(25), encodeVaruint(100)], -3], // 25% unlocked after 3 blocks
+    [[encodeVaruint(25), encodeVaruint(100)], -4], // 25% unlocked after 4 blocks
   ];
 
   const tx: OpReturnMessage = {
@@ -53,7 +54,7 @@ async function deployVestingContract() {
         moa: {
           divisibility: 100,
           live_time: 0,
-          supply_cap: 1000n.toString(),
+          supply_cap: encodeVaruint(1000),
           mint_mechanism: {
             preallocated: {
               allocations: {
@@ -65,8 +66,8 @@ async function deployVestingContract() {
               }
             },
             free_mint: {
-              supply_cap: 700n.toString(),
-              amount_per_mint: 1n.toString()
+              supply_cap: encodeVaruint(700),
+              amount_per_mint: encodeVaruint(1),
             }
           }
         }
@@ -94,14 +95,14 @@ async function deployVestingContract() {
 }
 
 async function vestedMint() {
-  const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
+  const contract: BlockTxTuple = [encodeVaruint(101832), encodeVaruint(1)]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
   const tx: OpReturnMessage = {
     contract_call: {
       contract,
       call_type: {
         mint: {
-          pointer: 1 // Points to the mint receiver's index in Output array
+          pointer: encodeVaruint(1) // Points to the mint receiver's index in Output array
         }
       }
     }
@@ -127,14 +128,14 @@ async function vestedMint() {
 }
 
 async function freeMint() {
-  const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
+  const contract: BlockTxTuple = [encodeVaruint(101832), encodeVaruint(1)]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
   const tx: OpReturnMessage = {
     contract_call: {
       contract,
       call_type: {
         mint: {
-          pointer: 1 // Points to the mint receiver's index in Output array
+          pointer: encodeVaruint(1) // Points to the mint receiver's index in Output array
         }
       }
     }

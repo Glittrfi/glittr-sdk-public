@@ -4,6 +4,7 @@ import {
   BitcoinUTXO,
   BlockTxTuple,
   electrumFetchNonGlittrUtxos,
+  encodeVaruint,
   GlittrSDK,
   OpReturnMessage,
   Output,
@@ -54,11 +55,11 @@ async function deployWbtcContract() {
         moa: {
           divisibility: 8,
           live_time: 0,
-          supply_cap: 21000000n.toString(),
+          supply_cap: encodeVaruint(21000000),
           mint_mechanism: {
             purchase: {
-              input_asset: 'raw_btc',
-              ratio: { fixed: { ratio: [1, 1] } } // 1:1 ratio
+              input_asset: { raw_btc: {} },
+              ratio: { fixed: { ratio: [encodeVaruint(1), encodeVaruint(1)] } } // 1:1 ratio
             }
           }
         }
@@ -87,14 +88,14 @@ async function deployWbtcContract() {
 
 async function mint() {
   // Change this to your deployWbtcContract() result
-  const contract: BlockTxTuple = [101869, 1]; // https://explorer.glittr.fi/tx/688cbe5f4c147e46ef3ed2bbf448291c2041a7ab14ee9032ce1153b1ce89ed6e
+  const contract: BlockTxTuple = [encodeVaruint(101869), encodeVaruint(1)]; // https://explorer.glittr.fi/tx/688cbe5f4c147e46ef3ed2bbf448291c2041a7ab14ee9032ce1153b1ce89ed6e
 
   const tx: OpReturnMessage = {
     contract_call: {
       contract,
       call_type: {
         mint: {
-          pointer: 1 // Points to the mint receiver's index in Output array 
+          pointer: encodeVaruint(1) // Points to the mint receiver's index in Output array 
         }
       }
     }

@@ -1,10 +1,12 @@
 {
   "extends": "@glittr-sdk/typescript-config/base.json",
-  "compilerOptions": {},
+  "compilerOptions": {
+    "experimentalDecorators": true,
+  },
   "include": [
     "**/*.ts"
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
 }

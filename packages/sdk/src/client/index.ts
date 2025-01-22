@@ -9,8 +9,7 @@ import { AddressType } from "bitcoin-address-validation";
 import { encodeGlittrData } from "../utils/encode";
 import { fetchPOST } from "../utils/fetch";
 import { electrumFetchTxHex } from "../utils/electrum";
-import { OpReturnMessage } from "../transaction";
-import { APIS } from "./const";
+import { OpReturnMessage, txBuilder } from "../transaction";
 
 export type CreateTxParams = {
   address: string;
@@ -63,7 +62,7 @@ export class GlittrSDK {
     outputs = outputs ?? [];
     const addressType = getAddressType(address);
 
-    const embed = encodeGlittrData(JSON.stringify(tx));
+    const embed = await txBuilder.compress(tx)
     outputs = outputs.concat({ script: embed, value: 0 });
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -166,7 +165,7 @@ export class GlittrSDK {
 
     const addressType = getAddressType(account.address);
 
-    const embed = encodeGlittrData(JSON.stringify(tx));
+    const embed = await txBuilder.compress(tx)
     outputs = [{ script: embed, value: 0 }, ...outputs];
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -310,6 +309,16 @@ export class GlittrSDK {
     }
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
+
+    // Validate Glittr TX
+    const isValidGlittrTx = await fetchPOST(
+      `${this.glittrApi}/validate-tx`,
+      {},
+      hex
+    );
+    if (!isValidGlittrTx.is_valid)
+      throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
+      // console.error(`Invalid Glittr TX Format : ${isValidGlittrTx}`)
 
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,

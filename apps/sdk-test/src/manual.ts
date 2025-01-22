@@ -1,4 +1,4 @@
-import { Account, addFeeToTx, BitcoinUTXO, electrumFetchNonGlittrUtxos, GlittrSDK, OpReturnMessage, Output, txBuilder } from "@glittr-sdk/sdk";
+import { Account, addFeeToTx, BitcoinUTXO, electrumFetchNonGlittrUtxos, encodeVaruint, GlittrSDK, OpReturnMessage, Output, txBuilder } from "@glittr-sdk/sdk";
 
 async function deployFreeMintContract() {
   const NETWORK = 'regtest'
@@ -18,9 +18,9 @@ async function deployFreeMintContract() {
         moa: {
           divisibility: 18,
           live_time: 0,
-          supply_cap: "1000000000",
+          supply_cap: encodeVaruint("1000000000"),
           ticker: "FKBTC",
-          mint_mechanism: { free_mint: { amount_per_mint: "10", supply_cap: "1000000000" } }
+          mint_mechanism: { free_mint: { amount_per_mint: encodeVaruint("10"), supply_cap: encodeVaruint("1000000000") } }
         }
       },
     },
@@ -60,7 +60,7 @@ async function deployPreallocatedFreeMint() {
     network: NETWORK,
     wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
   })
- 
+
   const tx: OpReturnMessage = {
     contract_creation: {
       contract_type: {
@@ -73,8 +73,8 @@ async function deployPreallocatedFreeMint() {
               }
             }
           },
-          supply_cap: "10000",
-          ticker: "VBTC" 
+          supply_cap: encodeVaruint("10000"),
+          ticker: "VBTC"
         }
       }
     }

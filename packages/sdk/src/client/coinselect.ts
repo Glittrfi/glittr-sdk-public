@@ -6,6 +6,7 @@ import { OpReturnMessage } from "../transaction";
 import { electrumFetchTxHex, electrumFetchNonGlittrUtxos } from "../utils/electrum";
 import { getInputBytes, getOutputBytes, getTransactionBytes } from "../helper/fee";
 import { fetchGET } from "../utils/fetch";
+import { decodeVaruint, encodeVaruint } from "../utils";
 
 export const FEE_TX_EMPTY_SIZE = 4 + 1 + 1 + 4;
 
@@ -27,7 +28,7 @@ export type CoinSelectParams = {};
 
 function _sumValues(data: BitcoinUTXO[] | Output[]) {
   // @ts-ignore
-  return data.reduce((prev, input) => prev + (input.value || 0), 0);
+  return data?.reduce((prev: any, input: any) => prev + (input.value || 0), 0);
 }
 
 function _isTxContainsOnlyTransfer(tx: OpReturnMessage) {
@@ -163,34 +164,35 @@ export async function coinSelect(
 
     // Check if glittr asset inputs are enough
     for (const { asset, amount } of transferAssets) {
+      const _amount = decodeVaruint(amount)
       const assetId = `${asset[0]}:${asset[1]}`;
 
       // If input asset is enough, continue to next asset
-      if (getInputAssetSum(assetId) === BigInt(amount)) {
+      if (getInputAssetSum(assetId) === BigInt(_amount)) {
         continue;
       }
 
       // Loop through relevant UTXOs till input asset is enough or more
       for (const utxo of relevantUtxos) {
-        if (getInputAssetSum(assetId) >= BigInt(amount)) break;
+        if (getInputAssetSum(assetId) >= BigInt(_amount)) break;
         if (inputs.some(input => input.txid === utxo.txid)) continue;
 
         addUtxosToInputs([utxo], feeRate);
       }
 
       // If input asset is still not enough, throw error
-      if (getInputAssetSum(assetId) < BigInt(amount)) {
-        throw new Error(`Insufficient balance for asset ${assetId}. Required: ${amount}, Available: ${getInputAssetSum(assetId)}`);
+      if (getInputAssetSum(assetId) < BigInt(_amount)) {
+        throw new Error(`Insufficient balance for asset ${assetId}. Required: ${_amount}, Available: ${getInputAssetSum(assetId)}`);
       }
 
-      const excessAssetValue = getInputAssetSum(assetId) - BigInt(amount);
+      const excessAssetValue = getInputAssetSum(assetId) - BigInt(_amount);
       if (excessAssetValue > 0) {
         // TODO handle excess asset input
         // - add excess amount transfer tx into transfer.transfers
         tx?.transfer?.transfers.push({
           asset: asset,
-          amount: excessAssetValue.toString(),
-          output: outputs.length,
+          amount: encodeVaruint(excessAssetValue),
+          output: encodeVaruint(outputs.length),
         });
 
         // - add output for excess amount to the sender address
