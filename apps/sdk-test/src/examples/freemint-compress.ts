@@ -10,12 +10,14 @@ import {
   OpReturnMessage,
 } from "@glittr-sdk/sdk";
 
-const NETWORK = "regtest";
+const NETWORK = "testnet";
 const client = new GlittrSDK({
   network: NETWORK,
   apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
-  glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
-  electrumApi: "https://devnet-electrum.glittr.fi" // devnet
+  // glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
+  // electrumApi: "https://devnet-electrum.glittr.fi" // devnet
+  glittrApi: "https://testnet-core-api.glittr.fi", // testnet
+  electrumApi: "https://testnet-electrum.glittr.fi" // testnet
 });
 
 const creatorAccount = new Account({
@@ -43,17 +45,17 @@ async function deployFreemintCompress() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, creatorAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, creatorAccount.p2tr().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: await txBuilder.compress(tx), value: 0 },
-    { address: creatorAccount.p2pkh().address, value: 546 }
+    { address: creatorAccount.p2tr().address, value: 546 }
   ]
 
-  const { inputs, outputs } = await addFeeToTx(NETWORK, creatorAccount.p2pkh().address, utxos, nonFeeInputs, nonFeeOutputs)
+  const { inputs, outputs } = await addFeeToTx(NETWORK, creatorAccount.p2tr().address, utxos, nonFeeInputs, nonFeeOutputs)
 
   const txid = await client.createAndBroadcastRawTx({
-    account: creatorAccount.p2pkh(),
+    account: creatorAccount.p2tr(),
     inputs,
     outputs
   })
