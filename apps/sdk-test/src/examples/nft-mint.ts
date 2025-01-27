@@ -38,23 +38,25 @@ async function deployNftCompress() {
           //   "50350a3820380a3235350affffffffffffffffffff13ff13ffffffffff13ff13ffffffffff13343434ffffffff1300fc0000ffffff139e9e9e9effffff13131313ffffff131334343434ff",
           //   "hex"
           // )),
-          asset_image: Array.from(Buffer.from(
-            "55",
-            "hex"
-          )),
+          asset_image: Array.from(
+            Buffer.from(
+              "50350a3820380a3235350affffffffffffffffffff13ff13ffffffffff13ff13ffffffffff13343434ffffffff1300fc0000ffffff139e9e9e9effffff13131313ffffff131334343434ff",
+              "hex"
+            )
+          ),
           supply_cap: encodeVaruint(1),
           live_time: 0,
         },
       },
     },
     contract_call: {
-        contract: null,
-        call_type: {
-            mint: {
-                pointer: encodeVaruint(0),
-            }
-        }
-    }
+      contract: null,
+      call_type: {
+        mint: {
+          pointer: encodeVaruint(1),
+        },
+      },
+    },
   };
 
   console.log(`[+] Creator Account ${creatorAccount.p2pkh().address}`);
