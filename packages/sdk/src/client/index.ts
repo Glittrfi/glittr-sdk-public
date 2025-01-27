@@ -149,7 +149,7 @@ export class GlittrSDK {
       hex
     );
     if (!isValidGlittrTx.is_valid)
-      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+      throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
 
     // Broadcast TX
     const txId = await fetchPOST(`${this.electrumApi}/tx`, {}, hex);
