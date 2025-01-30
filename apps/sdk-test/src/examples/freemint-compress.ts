@@ -1,3 +1,4 @@
+import { serialize } from "@glittr-sdk/borsh";
 import {
   Account,
   GlittrSDK,
@@ -8,6 +9,8 @@ import {
   encodeVaruint,
   txBuilder,
   OpReturnMessage,
+  schema,
+  encodeBase26,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "testnet";
@@ -30,14 +33,14 @@ async function deployFreemintCompress() {
     contract_creation: {
       contract_type: {
         moa: {
-          ticker: "FOXY",
+          ticker: encodeBase26("FOXY"),
           divisibility: 18,
           live_time: 0,
-          supply_cap: encodeVaruint(BigInt(500000000)),
+          supply_cap: encodeVaruint(BigInt(1000)),
           mint_mechanism: {
             free_mint: {
-              supply_cap: encodeVaruint(BigInt(500000000)),
-              amount_per_mint: encodeVaruint(BigInt(50))
+              supply_cap: encodeVaruint(BigInt(400)),
+              amount_per_mint: encodeVaruint(BigInt(1))
             },
           },
         }

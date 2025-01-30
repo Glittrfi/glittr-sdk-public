@@ -131,6 +131,9 @@ export class BorshSerializer {
         if (schema.array.len) {
             utils.expect_same_size(value.length, schema.array.len, this.fieldPath);
         } 
+        if (schema.array.showLen) {
+            this.encoded.store_value(value.length, 'u32');
+        }
         // else {
         //     // 4 bytes for length
         //     this.encoded.store_value(value.length, 'u32');

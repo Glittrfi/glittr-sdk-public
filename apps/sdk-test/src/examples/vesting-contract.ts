@@ -1,3 +1,4 @@
+import { serialize } from "@glittr-sdk/borsh";
 import {
   Account,
   GlittrSDK,
@@ -10,13 +11,16 @@ import {
   txBuilder,
   BlockTxTuple,
   encodeVaruint,
+  schema,
+  Varuint,
 } from "@glittr-sdk/sdk";
+import { AllocationType } from "@glittr-sdk/sdk/dist/transaction/shared";
 
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
   apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
-  glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+  glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
 
@@ -41,32 +45,33 @@ async function deployVestingContract() {
     reserveAccount.p2pkh().keypair.publicKey
   );
 
-  const quarterlyVesting: [Fraction, number][] = [
-    [[encodeVaruint(25), encodeVaruint(100)], -1], // 25% unlocked after 1 blocks
-    [[encodeVaruint(25), encodeVaruint(100)], -2], // 25% unlocked after 2 blocks
-    [[encodeVaruint(25), encodeVaruint(100)], -3], // 25% unlocked after 3 blocks
-    [[encodeVaruint(25), encodeVaruint(100)], -4], // 25% unlocked after 4 blocks
-  ];
+  const allocations = new Map<Varuint, AllocationType>()
+  allocations.set(encodeVaruint(200), {vec_pubkey: [receiver1PublicKey]})
+  allocations.set(encodeVaruint(400), {vec_pubkey: [receiver2PublicKey]})
+
+  const quarterlyVesting = [
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -4 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -3 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -2 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -1 },
+  ]
 
   const tx: OpReturnMessage = {
     contract_creation: {
       contract_type: {
         moa: {
-          divisibility: 100,
+          divisibility: 18,
           live_time: 0,
           supply_cap: encodeVaruint(1000),
           mint_mechanism: {
             preallocated: {
-              allocations: {
-                "100": [receiver1PublicKey],
-                "200": [receiver2PublicKey]
-              },
+              allocations,
               vesting_plan: {
                 scheduled: quarterlyVesting
               }
             },
             free_mint: {
-              supply_cap: encodeVaruint(700),
+              supply_cap: encodeVaruint(400),
               amount_per_mint: encodeVaruint(1),
             }
           }
@@ -79,7 +84,7 @@ async function deployVestingContract() {
   const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
-    { script: txBuilder.compile(tx), value: 0 }, // Output #0 should always be OP_RETURN
+    { script: await txBuilder.compress(tx), value: 0 }, // Output #0 should always be OP_RETURN
     { address: address, value: 546 }
   ]
 
