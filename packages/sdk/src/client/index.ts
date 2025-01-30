@@ -32,6 +32,13 @@ export type CreateAndBroadcastRawTxParams = {
   outputs: Output[];
 };
 
+export type CreateRawTxParams = {
+  address: string;
+  inputs: BitcoinUTXO[];
+  outputs: Output[];
+  publicKey?: string
+}
+
 type GlittrSDKParams = {
   network: Network;
   apiKey: string,
@@ -339,5 +346,73 @@ export class GlittrSDK {
       hex
     );
     return txId;
+  }
+
+  async createRawTx({
+    address,
+    inputs,
+    outputs,
+    publicKey
+  }: CreateRawTxParams) {
+    const addressType = getAddressType(address)
+
+    if (inputs && inputs.length === 0) {
+      throw new Error("No inputs provided");
+    }
+
+    if (outputs && outputs.length === 0) {
+      throw new Error("No outputs provided");
+    }
+
+    const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
+
+     for (const input of inputs) {
+      switch (addressType) {
+        case AddressType.p2pkh:
+          const txHex = await electrumFetchTxHex(this.electrumApi, this.apiKey, input.txid);
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            nonWitnessUtxo: Buffer.from(txHex, "hex"),
+          });
+          break;
+        case AddressType.p2wpkh:
+          const paymentOutput = payments.p2wpkh({
+            address,
+            network: getBitcoinNetwork(this.network),
+          }).output!;
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: paymentOutput,
+              value: input.value,
+            },
+          });
+          break;
+        case AddressType.p2tr:
+          const p2trOutput = payments.p2tr({ address, network: getBitcoinNetwork(this.network) }).output!
+
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: p2trOutput,
+              value: input.value
+            },
+            tapInternalKey: publicKey ? Buffer.from(publicKey, 'hex').slice(1, 33) : undefined
+          })
+      }
+    }
+
+    for (const output of outputs) {
+      if (output.address) {
+        psbt.addOutput({ address: output.address, value: output.value });
+      } else if (output.script) {
+        psbt.addOutput({ script: output.script, value: output.value });
+      }
+    }
+
+    return psbt
   }
 }
