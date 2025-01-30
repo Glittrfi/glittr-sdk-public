@@ -55,7 +55,7 @@ async function deployCommitmentFreeMintContract() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, creatorAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, creatorAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 },
@@ -98,7 +98,7 @@ async function mint() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, minterAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, minterAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 },

@@ -74,15 +74,12 @@ export class GlittrSDK {
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
-      getBitcoinNetwork(this.network),
+      this,
       utxos ?? [],
       outputs,
       2,
       address,
       tx,
-      this.apiKey,
-      this.electrumApi,
-      this.glittrApi,
       address,
       publicKey
     );
@@ -178,15 +175,12 @@ export class GlittrSDK {
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
-      getBitcoinNetwork(this.network),
+      this,
       utxos ?? [],
       outputs,
       2,
       account.address,
       tx,
-      this.apiKey,
-      this.electrumApi,
-      this.glittrApi,
       account.address,
       account.keypair.publicKey.toString('hex')
     );

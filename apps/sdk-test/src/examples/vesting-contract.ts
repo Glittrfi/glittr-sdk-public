@@ -81,7 +81,7 @@ async function deployVestingContract() {
   }
 
   const address = account.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: await txBuilder.compress(tx), value: 0 }, // Output #0 should always be OP_RETURN
@@ -114,7 +114,7 @@ async function vestedMint() {
   }
 
   const address = reserveAccount.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }, // Output #0 should alwasy be OP_RETURN
@@ -147,7 +147,7 @@ async function freeMint() {
   }
 
   const address = freeMintAccount.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }, // Output #0 should alwasy be OP_RETURN

@@ -1,3 +1,4 @@
+import { GlittrSDK } from "../client";
 import { getGlittrAsset } from "../helper/asset";
 import { BitcoinUTXO } from "../utxo";
 import { fetchGET } from "./fetch";
@@ -15,11 +16,11 @@ export const electrumFetchTxHex = async (electrumApiUrl: string, apiKey: string,
 }
 
 
-export const electrumFetchNonGlittrUtxos = async (electrumApiUrl: string, apiKey: string, address: string): Promise<BitcoinUTXO[]> => {
+export const electrumFetchNonGlittrUtxos = async (client: GlittrSDK, address: string): Promise<BitcoinUTXO[]> => {
   try {
     const unconfirmedUtxos = await fetchGET(
-      `${electrumApiUrl}/address/${address}/utxo`,
-      { Authorization: `Bearer ${apiKey}` }
+      `${client.electrumApi}/address/${address}/utxo`,
+      { Authorization: `Bearer ${client.apiKey}` }
     ) ?? []
     const utxos = unconfirmedUtxos.filter(
       (tx: BitcoinUTXO) => tx.status && tx.status.confirmed
@@ -27,7 +28,7 @@ export const electrumFetchNonGlittrUtxos = async (electrumApiUrl: string, apiKey
 
     const nonGlittrUtxos: BitcoinUTXO[] = []
     for (const utxo of utxos) {
-      const assetString = await getGlittrAsset(apiKey, utxo.txid, utxo.vout)
+      const assetString = await getGlittrAsset(client, utxo.txid, utxo.vout)
       const asset = JSON.parse(assetString);
       const assetIsEmpty =
         !asset.assets ||
