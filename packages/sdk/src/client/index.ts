@@ -9,8 +9,7 @@ import { AddressType } from "bitcoin-address-validation";
 import { encodeGlittrData } from "../utils/encode";
 import { fetchPOST } from "../utils/fetch";
 import { electrumFetchTxHex } from "../utils/electrum";
-import { OpReturnMessage } from "../transaction";
-import { APIS } from "./const";
+import { OpReturnMessage, txBuilder } from "../transaction";
 
 export type CreateTxParams = {
   address: string;
@@ -32,6 +31,13 @@ export type CreateAndBroadcastRawTxParams = {
   inputs: BitcoinUTXO[];
   outputs: Output[];
 };
+
+export type CreateRawTxParams = {
+  address: string;
+  inputs: BitcoinUTXO[];
+  outputs: Output[];
+  publicKey?: string
+}
 
 type GlittrSDKParams = {
   network: Network;
@@ -63,7 +69,7 @@ export class GlittrSDK {
     outputs = outputs ?? [];
     const addressType = getAddressType(address);
 
-    const embed = encodeGlittrData(JSON.stringify(tx));
+    const embed = await txBuilder.compress(tx)
     outputs = outputs.concat({ script: embed, value: 0 });
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -113,6 +119,15 @@ export class GlittrSDK {
             witnessUtxo: input.witnessUtxo,
           });
           break;
+        case AddressType.p2tr:
+          const tapInternalKeyXOnly = input.tapInternalKey!.slice(1, 33)
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            witnessUtxo: input.witnessUtxo,
+            tapInternalKey: tapInternalKeyXOnly
+          })
+          break;
         default:
           throw new Error(`Error Address Type not supported yet`);
       }
@@ -155,7 +170,7 @@ export class GlittrSDK {
 
     const addressType = getAddressType(account.address);
 
-    const embed = encodeGlittrData(JSON.stringify(tx));
+    const embed = await txBuilder.compress(tx)
     outputs = [{ script: embed, value: 0 }, ...outputs];
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -167,6 +182,7 @@ export class GlittrSDK {
       account.address,
       tx,
       account.address
+      account.keypair.publicKey.toString('hex')
     );
 
     // Hacky: If the embeded tx is different from the tx passed in, change the opreturn to the tx from coinselect
@@ -192,6 +208,14 @@ export class GlittrSDK {
             index: input.index,
             witnessUtxo: input.witnessUtxo,
           });
+          break;
+        case AddressType.p2tr:
+          psbt.addInput({
+            hash: input.hash,
+            index: input.index,
+            witnessUtxo: input.witnessUtxo,
+            tapInternalKey: input.tapInternalKey
+          })
           break;
         default:
           throw new Error(`Error Address Type not supported yet`);
@@ -270,6 +294,17 @@ export class GlittrSDK {
             },
           });
           break;
+        case AddressType.p2tr:
+          const p2trOutput = payments.p2tr({ address: account.address, network: getBitcoinNetwork(this.network) }).output!
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: p2trOutput,
+              value: input.value
+            },
+            tapInternalKey: account.keypair.publicKey
+          })
       }
     }
 
@@ -289,11 +324,89 @@ export class GlittrSDK {
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
+    // Validate Glittr TX
+    const isValidGlittrTx = await fetchPOST(
+      `${this.glittrApi}/validate-tx`,
+      {},
+      hex
+    );
+    if (!isValidGlittrTx.is_valid)
+      throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
+    // console.error(`Invalid Glittr TX Format : ${isValidGlittrTx}`)
+
     const txId = await fetchPOST(
       `${this.electrumApi}/tx`,
       { Authorization: `Bearer ${this.apiKey}` },
       hex
     );
     return txId;
+  }
+
+  async createRawTx({
+    address,
+    inputs,
+    outputs,
+    publicKey
+  }: CreateRawTxParams) {
+    const addressType = getAddressType(address)
+
+    if (inputs && inputs.length === 0) {
+      throw new Error("No inputs provided");
+    }
+
+    if (outputs && outputs.length === 0) {
+      throw new Error("No outputs provided");
+    }
+
+    const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
+
+     for (const input of inputs) {
+      switch (addressType) {
+        case AddressType.p2pkh:
+          const txHex = await electrumFetchTxHex(this.electrumApi, this.apiKey, input.txid);
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            nonWitnessUtxo: Buffer.from(txHex, "hex"),
+          });
+          break;
+        case AddressType.p2wpkh:
+          const paymentOutput = payments.p2wpkh({
+            address,
+            network: getBitcoinNetwork(this.network),
+          }).output!;
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: paymentOutput,
+              value: input.value,
+            },
+          });
+          break;
+        case AddressType.p2tr:
+          const p2trOutput = payments.p2tr({ address, network: getBitcoinNetwork(this.network) }).output!
+
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: p2trOutput,
+              value: input.value
+            },
+            tapInternalKey: publicKey ? Buffer.from(publicKey, 'hex').slice(1, 33) : undefined
+          })
+      }
+    }
+
+    for (const output of outputs) {
+      if (output.address) {
+        psbt.addOutput({ address: output.address, value: output.value });
+      } else if (output.script) {
+        psbt.addOutput({ script: output.script, value: output.value });
+      }
+    }
+
+    return psbt
   }
 }

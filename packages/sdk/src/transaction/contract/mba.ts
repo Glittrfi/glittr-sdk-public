@@ -1,4 +1,4 @@
-import { BlockHeight, Fraction, U128 } from "../../utils";
+import { BlockHeight, Fraction, U128, Varuint } from "../../utils";
 import {
   Commitment,
   FreeMint,
@@ -48,14 +48,21 @@ export type BurnMechanism = {
 
 // Swap Mechanism
 export type SwapMechanism = {
-  fee?: U128;
+  fee?: Varuint;
 };
 
 export type MintBurnAssetContract = {
-  ticker?: string;
-  supply_cap?: U128;
+  ticker?: {
+    number: Uint8Array;
+    spacers: Uint8Array;
+  } | {
+    number: Uint8Array;
+    spacers?: undefined;
+  };
+  supply_cap?: Varuint;
   divisibility: number;
   live_time: BlockHeight;
+  end_time?: BlockHeight;
   mint_mechanism: MBAMintMechanism;
   burn_mechanism: BurnMechanism;
   swap_mechanism: SwapMechanism;

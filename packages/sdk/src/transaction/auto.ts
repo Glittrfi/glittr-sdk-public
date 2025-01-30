@@ -1,4 +1,4 @@
-import { BitcoinUTXO, OpReturnMessage, Output, txBuilder } from "..";
+import { BitcoinUTXO, BlockTxTuple, encodeBase26, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
 import { Account } from "../account";
 import { GlittrSDK } from "../client";
 import { getAssetTickers, getAssetUtxos } from "../helper/asset";
@@ -72,7 +72,7 @@ class ContractDeployment {
         contract: null,
         call_type: {
           mint: {
-            pointer: 3
+            pointer: encodeVaruint(3)
           }
         }
       },
@@ -85,8 +85,8 @@ class ContractDeployment {
               collateralized: {
                 _mutable_assets: false,
                 input_assets: [
-                  { glittr_asset: [block1!, txIndex1!] },
-                  { glittr_asset: [block2!, txIndex2!] }
+                  { glittr_asset: [encodeVaruint(block1!), encodeVaruint(txIndex1!)] },
+                  { glittr_asset: [encodeVaruint(block2!), encodeVaruint(txIndex2!)] }
                 ],
                 mint_structure: {
                   proportional: {
@@ -97,21 +97,21 @@ class ContractDeployment {
             },
             burn_mechanism: {},
             swap_mechanism: {},
-            ticker: assetTickers.join('-')
+            ticker: encodeBase26(assetTickers.join('-'))
           }
         }
       },
       transfer: {
         transfers: [
           {
-            amount: (asset1Total - asset1Required).toString(),
-            asset: [block1, txIndex1] as [number, number],
-            output: 1
+            amount: encodeVaruint(asset1Total - asset1Required),
+            asset: [encodeVaruint(block1!), encodeVaruint(txIndex1!)],
+            output: encodeVaruint(1)
           },
           {
-            amount: (asset2Total - asset2Required).toString(),
-            asset: [block2, txIndex2] as [number, number],
-            output: 2
+            amount: encodeVaruint(asset2Total - asset2Required),
+            asset: [encodeVaruint(block2!), encodeVaruint(txIndex2!)],
+            output: encodeVaruint(2)
           }
         ]
       }
@@ -141,7 +141,7 @@ class ContractDeployment {
   }
 
   async freeMint(ticker: string, divisibility: number, amountPerMint: string, supplyCap?: string) {
-    const _supplyCap = supplyCap ? supplyCap : undefined;
+    const _supplyCap = supplyCap ? encodeVaruint(supplyCap) : undefined;
     const tx: OpReturnMessage = {
       contract_creation: {
         contract_type: {
@@ -149,8 +149,8 @@ class ContractDeployment {
             divisibility,
             live_time: 0,
             supply_cap: _supplyCap,
-            ticker,
-            mint_mechanism: { free_mint: { amount_per_mint: amountPerMint, supply_cap: _supplyCap } }
+            ticker: encodeBase26(ticker),
+            mint_mechanism: { free_mint: { amount_per_mint: encodeVaruint(amountPerMint), supply_cap: _supplyCap } }
           }
         },
       },
@@ -176,7 +176,7 @@ class ContractDeployment {
   }
 
   async paidMint(ticker: string, divisibility: number, mechanism: PurchaseBurnSwap, supplyCap?: string) {
-    const _supplyCap = supplyCap ? supplyCap : undefined;
+    const _supplyCap = supplyCap ? encodeVaruint(supplyCap) : undefined;
     const tx: OpReturnMessage = {
       contract_creation: {
         contract_type: {
@@ -184,7 +184,7 @@ class ContractDeployment {
             divisibility,
             live_time: 0,
             supply_cap: _supplyCap,
-            ticker,
+            ticker: encodeBase26(ticker),
             mint_mechanism: {
               purchase: {
                 input_asset: mechanism.input_asset,
@@ -231,10 +231,10 @@ class ContractCall {
     // TODO detect if the contract is paid mint or free mint
     const tx: OpReturnMessage = {
       contract_call: {
-        contract: contractId.split(':').map(Number) as [number, number],
+        contract: [encodeVaruint(contractId.split(":")[0]!), encodeVaruint(contractId.split(":")[1]!)],
         call_type: {
           mint: {
-            pointer: 1, // 0 is OpReturn
+            pointer: encodeVaruint(1), // 0 is OpReturn
             oracle_message: oracleMessage,
           },
         },
@@ -277,14 +277,14 @@ export class GlittrTransaction {
   }
 
   async transfer(transfers: TransferParams[]): Promise<string> {
-    const allTransfers: {amount: string, asset: [number, number], output: number}[] = [];
+    const allTransfers: {amount: Varuint, asset: BlockTxTuple, output: Varuint}[] = [];
     const excessOutputs: {address: string, value: number}[] = [];
 
     transfers.forEach((t, i) => {
       allTransfers.push({
-        amount: t.amount,
-        asset: t.contractId.split(':').map(Number) as [number, number],
-        output: i + 1, // 0 is OpReturn
+        amount: encodeVaruint(t.amount),
+        asset: [encodeVaruint(t.contractId.split(":")[0]!), encodeVaruint(t.contractId.split(":")[1]!)],
+        output: encodeVaruint(i + 1), // 0 is OpReturn
       });
     });
 
@@ -315,9 +315,9 @@ export class GlittrTransaction {
       if (excessAssetValue > 0) {
         // Add excess transfer to allTransfers array
         allTransfers.push({
-          asset: [Number(transfer.contractId.split(":")[0]), Number(transfer.contractId.split(":")[1])],
-          amount: excessAssetValue.toString(),
-          output: transfers.length + excessOutputs.length + 1
+          asset: [encodeVaruint(transfer.contractId.split(":")[0]!), encodeVaruint(transfer.contractId.split(":")[1]!)],
+          amount: encodeVaruint(excessAssetValue),
+          output: encodeVaruint(transfers.length + excessOutputs.length + 1)
         });
         // Add excess asset output to sender
         excessOutputs.push({

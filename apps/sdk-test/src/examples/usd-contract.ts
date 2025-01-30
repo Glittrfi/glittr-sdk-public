@@ -8,6 +8,7 @@ import {
   addFeeToTx,
   txBuilder,
   BlockTxTuple,
+  encodeVaruint,
 } from "@glittr-sdk/sdk";
 import {
   OracleMessage,
@@ -78,7 +79,7 @@ async function deployUsdContract() {
           live_time: 0,
           mint_mechanism: {
             purchase: {
-              input_asset: 'raw_btc',
+              input_asset: { raw_btc: {} },
               ratio: {
                 oracle: {
                   setting: {
@@ -114,7 +115,7 @@ async function deployUsdContract() {
 }
 
 async function mint() {
-  const contract: BlockTxTuple = [101999, 1]
+  const contract: BlockTxTuple = [encodeVaruint(101999), encodeVaruint(1)]
 
   // Get block height
   const blockHeightFetch = await fetch(`${client.electrumApi}/blocks/tip/height`)
@@ -127,7 +128,7 @@ async function mint() {
 
   const oracleMessage: OracleMessage = {
     asset_id: "btc",
-    ratio: [70000, 1], // 1 sats = 70000 asset
+    ratio: [encodeVaruint(70000), encodeVaruint(1)], // 1 sats = 70000 asset
     block_height: blockHeight,
   };
 
@@ -146,7 +147,7 @@ async function mint() {
       contract: contract,
       call_type: {
         mint: {
-          pointer: 1, // Points to the mint receiver's index in Output array
+          pointer: encodeVaruint(1), // Points to the mint receiver's index in Output array
           oracle_message: oracleSignedMessage
         }
       }
