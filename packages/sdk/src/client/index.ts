@@ -181,7 +181,7 @@ export class GlittrSDK {
       2,
       account.address,
       tx,
-      account.address
+      account.address,
       account.keypair.publicKey.toString('hex')
     );
 

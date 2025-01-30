@@ -245,7 +245,7 @@ export async function coinSelect(
         });
         break;
       case AddressType.p2tr:
-        const p2trOutput = payments.p2tr({ address, network }).output!;
+        const p2trOutput = payments.p2tr({ address, network: getBitcoinNetwork(client.network) }).output!;
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
