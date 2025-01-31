@@ -253,7 +253,7 @@ export async function coinSelect(
             script: p2trOutput,
             value: utxo.value,
           },
-          tapInternalKey: publicKey ? Buffer.from(publicKey, 'hex') : undefined
+          tapInternalKey: publicKey ? Buffer.from(publicKey, 'hex').subarray(1, 33) : undefined
         })
         break;
     }

@@ -1,4 +1,4 @@
-import { payments, Psbt } from "bitcoinjs-lib";
+import { payments, crypto, Psbt } from "bitcoinjs-lib";
 import { Account } from "../account/types";
 import { Network } from "../types";
 import { BitcoinUTXO, Output } from "../utxo";
@@ -36,7 +36,7 @@ export type CreateRawTxParams = {
   address: string;
   inputs: BitcoinUTXO[];
   outputs: Output[];
-  publicKey?: string
+  publicKey: string
 }
 
 type GlittrSDKParams = {
@@ -120,12 +120,11 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
-          const tapInternalKeyXOnly = input.tapInternalKey!.slice(1, 33)
           psbt.addInput({
             hash: input.hash,
             index: input.index,
             witnessUtxo: input.witnessUtxo,
-            tapInternalKey: tapInternalKeyXOnly
+            tapInternalKey: input.tapInternalKey
           })
           break;
         default:
@@ -231,11 +230,23 @@ export class GlittrSDK {
       }
     }
 
-    psbt.signAllInputs(account.keypair);
-    const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
-    if (!isValidSignature) {
-      throw new Error(`Error signature invalid`);
+    if (addressType === AddressType.p2tr) {
+      const tweakedSigner = account.keypair.tweak(
+        crypto.taggedHash(
+          'TapTweak',
+          account.keypair.publicKey.subarray(1, 33)
+        )
+      )
+      psbt.signAllInputs(tweakedSigner)
+    } else {
+      psbt.signAllInputs(account.keypair);
+
+      const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
+      if (!isValidSignature) {
+        throw new Error(`Error signature invalid`);
+      }
     }
+
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
@@ -295,7 +306,9 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
-          const p2trOutput = payments.p2tr({ address: account.address, network: getBitcoinNetwork(this.network) }).output!
+          const tapInternalKey = account.keypair.publicKey.subarray(1, 33)
+          const p2trPayments = payments.p2tr({ address: account.address, network: getBitcoinNetwork(this.network), internalPubkey: tapInternalKey })
+          const p2trOutput = p2trPayments.output!
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
@@ -303,7 +316,7 @@ export class GlittrSDK {
               script: p2trOutput,
               value: input.value
             },
-            tapInternalKey: account.keypair.publicKey
+            tapInternalKey,
           })
       }
     }
@@ -316,11 +329,23 @@ export class GlittrSDK {
       }
     }
 
-    psbt.signAllInputs(account.keypair);
-    const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
-    if (!isValidSignature) {
-      throw new Error(`Error signature invalid`);
+    if (addressType === AddressType.p2tr) {
+      const tweakedSigner = account.keypair.tweak(
+        crypto.taggedHash(
+          'TapTweak',
+          account.keypair.publicKey.subarray(1, 33)
+        )
+      )
+      psbt.signAllInputs(tweakedSigner)
+    } else {
+      psbt.signAllInputs(account.keypair);
+
+      const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
+      if (!isValidSignature) {
+        throw new Error(`Error signature invalid`);
+      }
     }
+
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
@@ -360,7 +385,7 @@ export class GlittrSDK {
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
 
-     for (const input of inputs) {
+    for (const input of inputs) {
       switch (addressType) {
         case AddressType.p2pkh:
           const txHex = await electrumFetchTxHex(this.electrumApi, this.apiKey, input.txid);
@@ -385,8 +410,9 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
-          const p2trOutput = payments.p2tr({ address, network: getBitcoinNetwork(this.network) }).output!
-
+          const tapInternalKey = Buffer.from(publicKey, 'hex').subarray(1, 33)
+          const p2trPayments = payments.p2tr({ address, network: getBitcoinNetwork(this.network), internalPubkey: tapInternalKey })
+          const p2trOutput = p2trPayments.output!
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
@@ -394,7 +420,7 @@ export class GlittrSDK {
               script: p2trOutput,
               value: input.value
             },
-            tapInternalKey: publicKey ? Buffer.from(publicKey, 'hex').slice(1, 33) : undefined
+            tapInternalKey,
           })
       }
     }
