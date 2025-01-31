@@ -102,5 +102,5 @@ async function mint() {
 }
 
 
-deployFreemintCompress()
-// mint()
+// deployFreemintCompress()
+mint()

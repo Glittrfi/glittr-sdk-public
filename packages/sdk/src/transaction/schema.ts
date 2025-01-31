@@ -11,7 +11,8 @@ export const schema: any = {
                   output: { array: { type: 'u8' } }, // VARUINT
                   amount: { array: { type: 'u8' } }, // VARUINT
                 }
-              }
+              },
+              showLen: true
             }
           }
         }
