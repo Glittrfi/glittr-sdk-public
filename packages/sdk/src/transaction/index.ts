@@ -11,7 +11,7 @@ import { OpReturnMessage } from "./types";
 import { schema } from "./schema";
 import { compress } from 'brotli-compress'
 import { script } from "bitcoinjs-lib";
-import { encodeBase26, encodeGlittrData, encodeVaruint } from "../utils";
+import { encodeBase26, encodeGlittrData, encodeVaruint, Header } from "../utils";
 
 interface TxBuilderStatic {
   transfer(params: TransferParams): OpReturnMessage;
@@ -172,6 +172,8 @@ class TxBuilderClass {
   }
 
   static async compress(message: OpReturnMessage): Promise<Buffer> {
+    const VERSION = 0;
+
     try {
 
       if (!message || Object.keys(message).length === 0) {
@@ -181,8 +183,16 @@ class TxBuilderClass {
       const encoded = serialize(schema, message as any)
       const compressed = await compress(encoded)
 
+      const useCompressed = encoded.length > compressed.length;
+      let data = encoded;
+      if(useCompressed){
+        data = compressed;
+      }
+      const header = new Header(VERSION, useCompressed);
+      const payload = Buffer.concat([header.toBytes(), data]);
+
       const glittrFlag = Buffer.from("GLITTR", "utf8"); // Prefix
-      const embed = script.compile([106, glittrFlag, Buffer.from(compressed)]);
+      const embed = script.compile([106, glittrFlag, payload]);
       return embed
     } catch (error) {
       throw new Error(`Error compiling OP_RETURN message ${error}`)
