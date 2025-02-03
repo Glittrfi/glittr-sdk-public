@@ -586,6 +586,19 @@ export const schema: any = {
                       }
                     }
                   }
+                },
+                {
+                  struct: {
+                    nft: {
+                      struct: {
+                        asset_image: { array: { type: 'u8', showLen: true } },
+                        supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
+                        live_time: 'i64',
+                        end_time: { option: 'i64' },
+                        pointer: { option: { array: { type: 'u8' } } }, // VARUINT
+                      }
+                    }
+                  }
                 }
               ]
           },
@@ -727,6 +740,18 @@ export const schema: any = {
                     }
                   }
                 }
+              },
+              {
+                struct: {
+                  update_nft: {
+                    struct: {
+                      whitelist_address_bloom_filter: { option: { array: { type: 'u8', showLen: true } } },
+                      trusted_marketplace_fee_addresses: { option: { array: { type: 'string' } } },
+                      access_key_pointer: { option: { array: { type: 'u8'} } } // VARUINT
+                    }
+                  }
+                }
+
               }
             ]
           }

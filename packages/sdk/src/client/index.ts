@@ -152,7 +152,7 @@ export class GlittrSDK {
       hex
     );
     if (!isValidGlittrTx.is_valid)
-      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+      throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
 
     // Broadcast TX
     const txId = await fetchPOST(`${this.electrumApi}/tx`, {}, hex);
@@ -183,12 +183,6 @@ export class GlittrSDK {
       account.address,
       account.keypair.publicKey.toString('hex')
     );
-
-    // Hacky: If the embeded tx is different from the tx passed in, change the opreturn to the tx from coinselect
-    if (embed !== encodeGlittrData(JSON.stringify(coins?.tx))) {
-      const embedCoinTx = encodeGlittrData(JSON.stringify(coins?.tx));
-      outputs[0] = { script: embedCoinTx, value: 0 };
-    }
 
     const _inputs = coins?.inputs ?? [];
     for (const input of _inputs) {
@@ -257,7 +251,7 @@ export class GlittrSDK {
       hex
     );
     if (!isValidGlittrTx.is_valid)
-      throw new Error(`Glittr Error: TX Invalid ${isValidGlittrTx}`);
+    throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
 
     // Broadcast TX
     const txId = await fetchPOST(`${this.electrumApi}/tx`, {}, hex);
