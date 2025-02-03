@@ -1,4 +1,4 @@
-import { BlockHeight, BlockTxTuple, Pubkey, U128, Varuint } from "../utils";
+import { BlockTxTuple, Pubkey, RelativeOrAbsoluteBlockHeight } from "../utils";
 import { CallType } from "./calltype/types";
 import { BurnMechanism, MBAMintMechanism } from "./contract/mba";
 import { ContractType } from "./contract/types";
@@ -11,7 +11,7 @@ import { TxTypeTransfer } from "./transfer/types";
 export type ContractInstantiateParams = {
   amount_per_mint?: string;
   divisibility: number;
-  live_time: BlockHeight;
+  live_time: RelativeOrAbsoluteBlockHeight;
   supply_cap?: string;
   ticker?: string;
   mint_mechanism: MBAMintMechanism
@@ -28,7 +28,7 @@ export type ContractInstantiateFormat = {
 export type FreeMintContractParams = {
   amount_per_mint: string;
   divisibility: number;
-  live_time: BlockHeight;
+  live_time: RelativeOrAbsoluteBlockHeight;
   supply_cap: string;
   ticker: string;
 };
@@ -42,7 +42,7 @@ export type FreeMintContractInstantiateFormat = {
  */
 export type PaidMintContractParams = {
   divisibility: number;
-  live_time: BlockHeight;
+  live_time: RelativeOrAbsoluteBlockHeight;
   supply_cap: string;
   ticker: string;
   payment: {
@@ -61,7 +61,7 @@ export type PaidMintContractInstantiateFormat = {
  */
 export type CreatePoolContractParams = {
   divisibility: number;
-  live_time: BlockHeight;
+  live_time: RelativeOrAbsoluteBlockHeight;
   supply_cap: string;
   assets: [InputAsset, InputAsset],
   invariant: number,

@@ -1,4 +1,4 @@
-import { BitcoinUTXO, BlockTxTuple, encodeBase26, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
+import { BitcoinUTXO, BlockTxTuple, encodeBase26, encodeVarint, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
 import { Account } from "../account";
 import { GlittrSDK } from "../client";
 import { getAssetTickers, getAssetUtxos } from "../helper/asset";
@@ -80,7 +80,7 @@ class ContractDeployment {
         contract_type: {
           mba: {
             divisibility: 18,
-            live_time: 0,
+            live_time: encodeVarint(0),
             mint_mechanism: {
               collateralized: {
                 _mutable_assets: false,
@@ -147,7 +147,7 @@ class ContractDeployment {
         contract_type: {
           moa: {
             divisibility,
-            live_time: 0,
+            live_time: encodeVarint(0),
             supply_cap: _supplyCap,
             ticker: encodeBase26(ticker),
             mint_mechanism: { free_mint: { amount_per_mint: encodeVaruint(amountPerMint), supply_cap: _supplyCap } }
@@ -182,7 +182,7 @@ class ContractDeployment {
         contract_type: {
           moa: {
             divisibility,
-            live_time: 0,
+            live_time: encodeVarint(0),
             supply_cap: _supplyCap,
             ticker: encodeBase26(ticker),
             mint_mechanism: {

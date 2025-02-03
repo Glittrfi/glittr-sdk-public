@@ -38,8 +38,8 @@ export const schema: any = {
                         },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
                         divisibility: 'u8',
-                        live_time: 'i64',
-                        end_time: { option: 'i64' },
+                        live_time: { array: { type: 'u8' } }, // VARINT
+                        end_time: { option: { array: { type: 'u8' } } }, // VARINT
                         mint_mechanism: {
                           struct: {
                             preallocated: {
@@ -72,7 +72,7 @@ export const schema: any = {
                                   vesting_plan: { // TODO, length of array is also encoded in Core
                                     option: {
                                       enum: [
-                                        { struct: { timelock: 'i64' } },
+                                        { struct: { timelock: { array: { type: 'u8' } } } }, // VARINT
                                         {
                                           struct: {
                                             scheduled: {
@@ -184,8 +184,8 @@ export const schema: any = {
                         },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
                         divisibility: 'u8',
-                        live_time: 'i64',
-                        end_time: { option: 'i64' },
+                        live_time: { array: { type: 'u8' } }, // VARINT
+                        end_time: { option: { array: { type: 'u8' } } }, // VARINT
                         mint_mechanism: {
                           struct: {
                             preallocated: {
@@ -218,7 +218,7 @@ export const schema: any = {
                                   vesting_plan: { // TODO, length of array is also encoded in Core
                                     option: {
                                       enum: [
-                                        { struct: { timelock: 'i64' } },
+                                        { struct: { timelock: { array: { type: 'u8' } } } }, // VARINT
                                         {
                                           struct: {
                                             scheduled: {
@@ -593,8 +593,8 @@ export const schema: any = {
                       struct: {
                         asset_image: { array: { type: 'u8', showLen: true } },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
-                        live_time: 'i64',
-                        end_time: { option: 'i64' },
+                        live_time: { array: { type: 'u8' } }, // VARINT
+                        end_time: { option: { array: { type: 'u8' } } }, // VARINT
                         pointer: { option: { array: { type: 'u8' } } }, // VARUINT
                       }
                     }
