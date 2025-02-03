@@ -9,7 +9,7 @@ import {
 
 type VestingPlan =
   | { timelock: RelativeOrAbsoluteBlockHeight }
-  | { scheduled: Array<[Fraction, RelativeOrAbsoluteBlockHeight]> };
+  | { scheduled: Array<{ ratio: Varuint[], tolerance: number }> };
 
 export type OracleSetting = {
   pubkey: Pubkey;
@@ -37,8 +37,17 @@ export type InputAsset =
   | { rune: {} }
   | { ordinal: {} };
 
+export type AllocationType =
+  | { vec_pubkey: Pubkey[] }
+  | {
+    bloom_filter: {
+      filter: number[],
+      arg: { tx_id: {} }
+    }
+  }
+
 export type Preallocated = {
-  allocations: Record<any, Pubkey[]>;
+  allocations: Map<Varuint, AllocationType>;
   vesting_plan?: VestingPlan;
 };
 export type FreeMint = {
@@ -53,7 +62,13 @@ export type PurchaseBurnSwap = {
 };
 
 export type ArgsCommitment = {
-  fixed_string: string;
+  fixed_string: {
+    number: Uint8Array;
+    spacers: Uint8Array;
+  } | {
+    number: Uint8Array;
+    spacers?: undefined;
+  };
   string: string
 }
 

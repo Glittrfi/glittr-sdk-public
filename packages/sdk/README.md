@@ -88,7 +88,7 @@ async function deployFreeMintContract() {
   };
 
   // Helper function to fetch non Glittr UTXOs
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, account.p2wpkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, account.p2wpkh().address)
   
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [

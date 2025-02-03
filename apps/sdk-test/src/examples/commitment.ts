@@ -10,6 +10,7 @@ import {
   BlockTxTuple,
   encryptMessage,
   encodeVaruint,
+  encodeBase26,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
@@ -45,7 +46,7 @@ async function deployCommitmentFreeMintContract() {
           commitment: {
             public_key: Array.from(creatorAccount.p2pkh().keypair.publicKey),
             args: {
-              fixed_string: "GLITTRAIRDROP",
+              fixed_string: encodeBase26("GLITTRAIRDROP"),
               string: "username"
             }
           }
@@ -54,7 +55,7 @@ async function deployCommitmentFreeMintContract() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, creatorAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, creatorAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 },
@@ -97,7 +98,7 @@ async function mint() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, minterAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, minterAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 },

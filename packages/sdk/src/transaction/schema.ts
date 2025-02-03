@@ -11,7 +11,8 @@ export const schema: any = {
                   output: { array: { type: 'u8' } }, // VARUINT
                   amount: { array: { type: 'u8' } }, // VARUINT
                 }
-              }
+              },
+              showLen: true
             }
           }
         }
@@ -27,7 +28,14 @@ export const schema: any = {
                   struct: {
                     moa: {
                       struct: {
-                        ticker: { option: 'string' },
+                        ticker: {
+                          option: {
+                            struct: {
+                              number: { array: { type: 'u8' } },
+                              spacers: { option: { array: { type: 'u8' } } }
+                            }
+                          }
+                        },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
                         divisibility: 'u8',
                         live_time: 'i64',
@@ -37,7 +45,7 @@ export const schema: any = {
                             preallocated: {
                               option: {
                                 struct: {
-                                  allocations: {
+                                  allocations: { // TODO, lacking 8 bytes compared to Core (from HashMap..??)
                                     map: {
                                       key: { array: { type: 'u8' } }, // VARUINT
                                       value: {
@@ -61,7 +69,7 @@ export const schema: any = {
                                       }
                                     }
                                   },
-                                  vesting_plan: {
+                                  vesting_plan: { // TODO, length of array is also encoded in Core
                                     option: {
                                       enum: [
                                         { struct: { timelock: 'i64' } },
@@ -144,7 +152,14 @@ export const schema: any = {
                               public_key: { array: { type: 'u8' } },
                               args: {
                                 struct: {
-                                  fixed_string: 'string',
+                                  fixed_string: {
+                                    option: {
+                                      struct: {
+                                        number: { array: { type: 'u8' } },
+                                        spacers: { option: { array: { type: 'u8' } } }
+                                      }
+                                    }
+                                  },
                                   string: 'string'
                                 }
                               }
@@ -159,7 +174,14 @@ export const schema: any = {
                   struct: {
                     mba: {
                       struct: {
-                        ticker: { option: 'string' },
+                        ticker: {
+                          option: {
+                            struct: {
+                              number: { array: { type: 'u8' } },
+                              spacers: { option: { array: { type: 'u8' } } }
+                            }
+                          }
+                        },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
                         divisibility: 'u8',
                         live_time: 'i64',
@@ -169,7 +191,7 @@ export const schema: any = {
                             preallocated: {
                               option: {
                                 struct: {
-                                  allocations: {
+                                  allocations: { // TODO, lacking 8 bytes compared to Core (from HashMap..??)
                                     map: {
                                       key: { array: { type: 'u8' } }, // VARUINT
                                       value: {
@@ -193,7 +215,7 @@ export const schema: any = {
                                       }
                                     }
                                   },
-                                  vesting_plan: {
+                                  vesting_plan: { // TODO, length of array is also encoded in Core
                                     option: {
                                       enum: [
                                         { struct: { timelock: 'i64' } },
@@ -396,7 +418,14 @@ export const schema: any = {
                               public_key: { array: { type: 'u8' } },
                               args: {
                                 struct: {
-                                  fixed_string: 'string',
+                                  fixed_string: {
+                                    option: {
+                                      struct: {
+                                        number: { array: { type: 'u8' } },
+                                        spacers: { option: { array: { type: 'u8' } } }
+                                      }
+                                    }
+                                  },
                                   string: 'string'
                                 }
                               }
@@ -594,7 +623,7 @@ export const schema: any = {
                             signature: { array: { type: 'u8' } },
                             message: {
                               struct: {
-                                input_outpoint: { option: { struct: { 0: { array: { type: 'u8' } } } } }, // TODO
+                                input_outpoint: { option: { struct: { txid: 'string', vout: 'u32' } } }, // TODO
                                 min_in_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 out_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 asset_id: { option: 'string' },
@@ -640,7 +669,7 @@ export const schema: any = {
                             signature: { array: { type: 'u8' } },
                             message: {
                               struct: {
-                                input_outpoint: { option: { struct: { 0: { array: { type: 'u8' } } } } }, // TODO
+                                input_outpoint: { option: { struct: { txid: 'string', vout: 'u32' } } }, // TODO
                                 min_in_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 out_value: { option: { array: { type: 'u8' } } }, // VARUINT
                                 asset_id: { option: 'string' },

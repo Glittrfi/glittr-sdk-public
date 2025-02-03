@@ -1,7 +1,7 @@
 import { ECPairInterface } from "ecpair";
 import { Network } from "../types";
 import { ecpair } from "../utils/ecpair";
-import { payments } from "bitcoinjs-lib";
+import { crypto, payments } from "bitcoinjs-lib";
 import { getBitcoinNetwork } from "../utils/network";
 import { P2pkhAccount, P2trAccount, P2wpkhAccount } from "./types";
 

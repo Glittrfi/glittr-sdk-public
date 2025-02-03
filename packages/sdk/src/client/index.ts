@@ -1,4 +1,4 @@
-import { payments, Psbt } from "bitcoinjs-lib";
+import { payments, crypto, Psbt } from "bitcoinjs-lib";
 import { Account } from "../account/types";
 import { Network } from "../types";
 import { BitcoinUTXO, Output } from "../utxo";
@@ -31,6 +31,13 @@ export type CreateAndBroadcastRawTxParams = {
   inputs: BitcoinUTXO[];
   outputs: Output[];
 };
+
+export type CreateRawTxParams = {
+  address: string;
+  inputs: BitcoinUTXO[];
+  outputs: Output[];
+  publicKey: string
+}
 
 type GlittrSDKParams = {
   network: Network;
@@ -67,15 +74,12 @@ export class GlittrSDK {
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
-      getBitcoinNetwork(this.network),
+      this,
       utxos ?? [],
       outputs,
       2,
       address,
       tx,
-      this.apiKey,
-      this.electrumApi,
-      this.glittrApi,
       address,
       publicKey
     );
@@ -116,12 +120,11 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
-          const tapInternalKeyXOnly = input.tapInternalKey!.slice(1, 33)
           psbt.addInput({
             hash: input.hash,
             index: input.index,
             witnessUtxo: input.witnessUtxo,
-            tapInternalKey: tapInternalKeyXOnly
+            tapInternalKey: input.tapInternalKey
           })
           break;
         default:
@@ -171,15 +174,12 @@ export class GlittrSDK {
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
     const coins = await coinSelect(
-      getBitcoinNetwork(this.network),
+      this,
       utxos ?? [],
       outputs,
       2,
       account.address,
       tx,
-      this.apiKey,
-      this.electrumApi,
-      this.glittrApi,
       account.address,
       account.keypair.publicKey.toString('hex')
     );
@@ -224,11 +224,23 @@ export class GlittrSDK {
       }
     }
 
-    psbt.signAllInputs(account.keypair);
-    const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
-    if (!isValidSignature) {
-      throw new Error(`Error signature invalid`);
+    if (addressType === AddressType.p2tr) {
+      const tweakedSigner = account.keypair.tweak(
+        crypto.taggedHash(
+          'TapTweak',
+          account.keypair.publicKey.subarray(1, 33)
+        )
+      )
+      psbt.signAllInputs(tweakedSigner)
+    } else {
+      psbt.signAllInputs(account.keypair);
+
+      const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
+      if (!isValidSignature) {
+        throw new Error(`Error signature invalid`);
+      }
     }
+
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
@@ -288,7 +300,9 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
-          const p2trOutput = payments.p2tr({ address: account.address, network: getBitcoinNetwork(this.network) }).output!
+          const tapInternalKey = account.keypair.publicKey.subarray(1, 33)
+          const p2trPayments = payments.p2tr({ address: account.address, network: getBitcoinNetwork(this.network), internalPubkey: tapInternalKey })
+          const p2trOutput = p2trPayments.output!
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
@@ -296,7 +310,7 @@ export class GlittrSDK {
               script: p2trOutput,
               value: input.value
             },
-            tapInternalKey: account.keypair.publicKey
+            tapInternalKey,
           })
       }
     }
@@ -309,11 +323,23 @@ export class GlittrSDK {
       }
     }
 
-    psbt.signAllInputs(account.keypair);
-    const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
-    if (!isValidSignature) {
-      throw new Error(`Error signature invalid`);
+    if (addressType === AddressType.p2tr) {
+      const tweakedSigner = account.keypair.tweak(
+        crypto.taggedHash(
+          'TapTweak',
+          account.keypair.publicKey.subarray(1, 33)
+        )
+      )
+      psbt.signAllInputs(tweakedSigner)
+    } else {
+      psbt.signAllInputs(account.keypair);
+
+      const isValidSignature = psbt.validateSignaturesOfAllInputs(validator);
+      if (!isValidSignature) {
+        throw new Error(`Error signature invalid`);
+      }
     }
+
     psbt.finalizeAllInputs();
     const hex = psbt.extractTransaction(true).toHex();
 
@@ -333,5 +359,74 @@ export class GlittrSDK {
       hex
     );
     return txId;
+  }
+
+  async createRawTx({
+    address,
+    inputs,
+    outputs,
+    publicKey
+  }: CreateRawTxParams) {
+    const addressType = getAddressType(address)
+
+    if (inputs && inputs.length === 0) {
+      throw new Error("No inputs provided");
+    }
+
+    if (outputs && outputs.length === 0) {
+      throw new Error("No outputs provided");
+    }
+
+    const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
+
+    for (const input of inputs) {
+      switch (addressType) {
+        case AddressType.p2pkh:
+          const txHex = await electrumFetchTxHex(this.electrumApi, this.apiKey, input.txid);
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            nonWitnessUtxo: Buffer.from(txHex, "hex"),
+          });
+          break;
+        case AddressType.p2wpkh:
+          const paymentOutput = payments.p2wpkh({
+            address,
+            network: getBitcoinNetwork(this.network),
+          }).output!;
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: paymentOutput,
+              value: input.value,
+            },
+          });
+          break;
+        case AddressType.p2tr:
+          const tapInternalKey = Buffer.from(publicKey, 'hex').subarray(1, 33)
+          const p2trPayments = payments.p2tr({ address, network: getBitcoinNetwork(this.network), internalPubkey: tapInternalKey })
+          const p2trOutput = p2trPayments.output!
+          psbt.addInput({
+            hash: input.txid,
+            index: input.vout,
+            witnessUtxo: {
+              script: p2trOutput,
+              value: input.value
+            },
+            tapInternalKey,
+          })
+      }
+    }
+
+    for (const output of outputs) {
+      if (output.address) {
+        psbt.addOutput({ address: output.address, value: output.value });
+      } else if (output.script) {
+        psbt.addOutput({ script: output.script, value: output.value });
+      }
+    }
+
+    return psbt
   }
 }

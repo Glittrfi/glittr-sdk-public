@@ -1,4 +1,4 @@
-import { BitcoinUTXO, BlockTxTuple, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
+import { BitcoinUTXO, BlockTxTuple, encodeBase26, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
 import { Account } from "../account";
 import { GlittrSDK } from "../client";
 import { getAssetTickers, getAssetUtxos } from "../helper/asset";
@@ -24,10 +24,10 @@ class ContractDeployment {
   }
 
   async liquidityPoolInitiate(inputAsset: [string, string], inputAmount: [string, string]) {
-    const assetTickers = await getAssetTickers(this.client.apiKey, inputAsset);
-    const asset1Utxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, inputAsset[0]);
-    const asset2Utxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, inputAsset[1]);
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const assetTickers = await getAssetTickers(this.client, inputAsset);
+    const asset1Utxos = await getAssetUtxos(this.client, this.account.p2wpkh().address, inputAsset[0]);
+    const asset2Utxos = await getAssetUtxos(this.client, this.account.p2wpkh().address, inputAsset[1]);
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
 
     // Accumulate UTXOs and track excess
     let asset1Total = BigInt(0);
@@ -97,7 +97,7 @@ class ContractDeployment {
             },
             burn_mechanism: {},
             swap_mechanism: {},
-            ticker: assetTickers.join('-')
+            ticker: encodeBase26(assetTickers.join('-'))
           }
         }
       },
@@ -149,14 +149,14 @@ class ContractDeployment {
             divisibility,
             live_time: 0,
             supply_cap: _supplyCap,
-            ticker,
+            ticker: encodeBase26(ticker),
             mint_mechanism: { free_mint: { amount_per_mint: encodeVaruint(amountPerMint), supply_cap: _supplyCap } }
           }
         },
       },
     };
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
     const nonFeeInputs: BitcoinUTXO[] = []
     const nonFeeOutputs: Output[] = [
       { script: txBuilder.compile(tx), value: 0 },
@@ -184,7 +184,7 @@ class ContractDeployment {
             divisibility,
             live_time: 0,
             supply_cap: _supplyCap,
-            ticker,
+            ticker: encodeBase26(ticker),
             mint_mechanism: {
               purchase: {
                 input_asset: mechanism.input_asset,
@@ -197,7 +197,7 @@ class ContractDeployment {
       },
     };
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
     const nonFeeInputs: BitcoinUTXO[] = []
     const nonFeeOutputs: Output[] = [
       { script: txBuilder.compile(tx), value: 0 },
@@ -241,7 +241,7 @@ class ContractCall {
       },
     };
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2wpkh().address)
     const nonFeeInputs: BitcoinUTXO[] = []
     const nonFeeOutputs: Output[] = [
       { script: txBuilder.compile(tx), value: 0 },
@@ -288,12 +288,12 @@ export class GlittrTransaction {
       });
     });
 
-    const utxos = await electrumFetchNonGlittrUtxos(this.client.electrumApi, this.client.apiKey, this.account.p2wpkh().address)
+    const utxos = await electrumFetchNonGlittrUtxos(this.client, this.account.p2tr().address)
 
     const nonFeeInputs: BitcoinUTXO[] = []
     for (const transfer of transfers) {
       const assetRequired = BigInt(transfer.amount)
-      const assetUtxos = await getAssetUtxos(this.client.apiKey, this.account.p2wpkh().address, transfer.contractId)
+      const assetUtxos = await getAssetUtxos(this.client, this.account.p2tr().address, transfer.contractId)
       let assetTotal = BigInt(0)
 
       for (const utxo of assetUtxos) {
@@ -321,7 +321,7 @@ export class GlittrTransaction {
         });
         // Add excess asset output to sender
         excessOutputs.push({
-          address: this.account.p2wpkh().address,
+          address: this.account.p2tr().address,
           value: 600
         });
       }
@@ -334,7 +334,7 @@ export class GlittrTransaction {
     };
 
     const nonFeeOutputs: Output[] = [
-      { script: txBuilder.compile(tx), value: 0 },
+      { script: await txBuilder.compress(tx), value: 0 },
       ...transfers.map(t => ({
         address: t.receiver,
         value: 600
@@ -344,14 +344,14 @@ export class GlittrTransaction {
 
     const { inputs, outputs } = await addFeeToTx(
       this.client.network,
-      this.account.p2wpkh().address,
+      this.account.p2tr().address,
       utxos,
       nonFeeInputs,
       nonFeeOutputs
     )
 
     return await this.client.createAndBroadcastRawTx({
-      account: this.account.p2wpkh(),
+      account: this.account.p2tr(),
       inputs,
       outputs
     });
