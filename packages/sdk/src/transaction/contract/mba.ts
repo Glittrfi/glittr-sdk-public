@@ -1,4 +1,4 @@
-import { BlockHeight, Fraction, U128, Varuint } from "../../utils";
+import { Fraction, RelativeOrAbsoluteBlockHeight, Varuint } from "../../utils";
 import {
   Commitment,
   FreeMint,
@@ -61,8 +61,8 @@ export type MintBurnAssetContract = {
   };
   supply_cap?: Varuint;
   divisibility: number;
-  live_time: BlockHeight;
-  end_time?: BlockHeight;
+  live_time: RelativeOrAbsoluteBlockHeight;
+  end_time?: RelativeOrAbsoluteBlockHeight;
   mint_mechanism: MBAMintMechanism;
   burn_mechanism: BurnMechanism;
   swap_mechanism: SwapMechanism;
