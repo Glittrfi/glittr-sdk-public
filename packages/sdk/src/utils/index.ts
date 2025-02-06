@@ -6,3 +6,4 @@ export * from "./encode";
 export * from "./varuint";
 export * from "./varint";
 export * from "./az-base26";
+export * from './header'
