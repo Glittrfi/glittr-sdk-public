@@ -1,4 +1,4 @@
-import { RelativeOrAbsoluteBlockHeight, Varuint } from "../../utils";
+import { RelativeOrAbsoluteBlockHeight, U128, Varuint } from "../../utils";
 import {
   Commitment,
   FreeMint,
@@ -21,8 +21,8 @@ export type MintOnlyAssetContract = {
     | {
         number: Uint8Array;
         spacers?: undefined;
-      };
-  supply_cap?: Varuint;
+      } | string;
+  supply_cap?: Varuint | U128;
   divisibility: number;
   live_time: RelativeOrAbsoluteBlockHeight;
   end_time?: RelativeOrAbsoluteBlockHeight;

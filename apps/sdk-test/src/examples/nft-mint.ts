@@ -1,25 +1,18 @@
 import {
   Account,
   GlittrSDK,
-  electrumFetchNonGlittrUtxos,
-  BitcoinUTXO,
   Output,
-  addFeeToTx,
-  txBuilder,
   OpReturnMessage,
-  encodeVaruint,
 } from "@glittr-sdk/sdk";
 
-const NETWORK = "regtest";
+const NETWORK = "testnet";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: "1c4938fb-1a10-48c2-82eb-bd34eeb05b20",
-  // glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
-  // electrumApi: "https://devnet-electrum.glittr.fi" // devnet
-  // glittrApi: "https://testnet-core-api.glittr.fi", // testnet
-  // electrumApi: "https://testnet-electrum.glittr.fi" // testnet
-  glittrApi: "http://localhost:3000",
-  electrumApi: "http://localhost:3002",
+  apiKey: "",
+  // glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+  // electrumApi: "https://devnet-electrum.glittr.fi", // devnet
+  glittrApi: "https://testnet-core-api.glittr.fi", // testnet
+  electrumApi: "https://testnet-electrum.glittr.fi" // testnet
 });
 
 const creatorAccount = new Account({
@@ -32,28 +25,26 @@ async function deployNftCompress() {
     contract_creation: {
       contract_type: {
         nft: {
-          /// convert b49b3f179d64a468ce49a761c54dd768f885e902b9d3b5e1bddf0a27c9fbdfc0i0.png -sample 30% out.pgm
-          /// cat out.pgm | xxd -p
+          /// cat out.bmp | xxd -p
           // asset_image: Array.from(Buffer.from(
-          //   "50350a3820380a3235350affffffffffffffffffff13ff13ffffffffff13ff13ffffffffff13343434ffffffff1300fc0000ffffff139e9e9e9effffff13131313ffffff131334343434ff",
+          //   "424d4000000000000000200000000c0000000800080001000100000000ffffff81000000c3000000df000000c9000000c3000000d7000000d7000000ff000000",
           //   "hex"
           // )),
-          asset_image: Array.from(
+          asset: Array.from(
             Buffer.from(
-              "50350a3820380a3235350affffffffffffffffffff13ff13ffffffffff13ff13ffffffffff13343434ffffffff1300fc0000ffffff139e9e9e9effffff13131313ffffff131334343434ff",
+              "424d4000000000000000200000000c0000000800080001000100000000ffffff81000000c3000000df000000c9000000c3000000d7000000d7000000ff000000",
               "hex"
             )
           ),
-          supply_cap: encodeVaruint(1),
+          supply_cap: "1",
           live_time: 0,
         },
       },
     },
     contract_call: {
-      contract: null,
       call_type: {
         mint: {
-          pointer: encodeVaruint(1),
+          pointer: 1,
         },
       },
     },

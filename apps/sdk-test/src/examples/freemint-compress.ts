@@ -1,4 +1,3 @@
-import { serialize } from "@glittr-sdk/borsh";
 import {
   Account,
   GlittrSDK,
@@ -9,7 +8,6 @@ import {
   encodeVaruint,
   txBuilder,
   OpReturnMessage,
-  schema,
   encodeBase26,
   BlockTxTuple,
 } from "@glittr-sdk/sdk";
@@ -17,16 +15,16 @@ import {
 const NETWORK = "testnet";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+  apiKey: "",
   // glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
   // electrumApi: "https://devnet-electrum.glittr.fi" // devnet
   glittrApi: "https://testnet-core-api.glittr.fi", // testnet
-  electrumApi: "https://testnet-electrum.glittr.fi" // testnet
+  electrumApi: "https://testnet-electrum.glittr.fi", // testnet
 });
 
 const creatorAccount = new Account({
   // wif: "cW84FgWG9U1MpKvdzZMv4JZKLSU7iFAzMmXjkGvGUvh5WvhrEASj",
-  wif: 'cU6mHpUnEn6MB3uwAhUgNvXW3ChsWZBm3AVY7cT3BnK7kVghdrTN', //unisat
+  wif: "cU6mHpUnEn6MB3uwAhUgNvXW3ChsWZBm3AVY7cT3BnK7kVghdrTN", //unisat
   network: NETWORK,
 });
 
@@ -42,30 +40,39 @@ async function deployFreemintCompress() {
           mint_mechanism: {
             free_mint: {
               supply_cap: encodeVaruint(BigInt(400)),
-              amount_per_mint: encodeVaruint(BigInt(1))
+              amount_per_mint: encodeVaruint(BigInt(1)),
             },
           },
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  };
 
-  const utxos = await electrumFetchNonGlittrUtxos(client, creatorAccount.p2tr().address)
-  const nonFeeInputs: BitcoinUTXO[] = []
+  const utxos = await electrumFetchNonGlittrUtxos(
+    client,
+    creatorAccount.p2tr().address
+  );
+  const nonFeeInputs: BitcoinUTXO[] = [];
   const nonFeeOutputs: Output[] = [
     { script: await txBuilder.compress(tx), value: 0 },
-    { address: creatorAccount.p2tr().address, value: 546 }
-  ]
+    { address: creatorAccount.p2tr().address, value: 546 },
+  ];
 
-  const { inputs, outputs } = await addFeeToTx(NETWORK, creatorAccount.p2tr().address, utxos, nonFeeInputs, nonFeeOutputs)
+  const { inputs, outputs } = await addFeeToTx(
+    NETWORK,
+    creatorAccount.p2tr().address,
+    utxos,
+    nonFeeInputs,
+    nonFeeOutputs
+  );
 
   const txid = await client.createAndBroadcastRawTx({
     account: creatorAccount.p2tr(),
     inputs,
-    outputs
-  })
+    outputs,
+  });
 
-  console.log(`TXID : ${txid}`)
+  console.log(`TXID : ${txid}`);
 }
 
 async function mint() {
@@ -76,31 +83,36 @@ async function mint() {
       contract,
       call_type: {
         mint: {
-          pointer: encodeVaruint(1) // Points to the mint receiver's index in Output array
-        }
-      }
-    }
-  }
+          pointer: encodeVaruint(1), // Points to the mint receiver's index in Output array
+        },
+      },
+    },
+  };
 
-  const address = creatorAccount.p2tr().address
-  const utxos = await electrumFetchNonGlittrUtxos(client, address)
-  const nonFeeInputs: BitcoinUTXO[] = []
+  const address = creatorAccount.p2tr().address;
+  const utxos = await electrumFetchNonGlittrUtxos(client, address);
+  const nonFeeInputs: BitcoinUTXO[] = [];
   const nonFeeOutputs: Output[] = [
     { script: await txBuilder.compress(tx), value: 0 }, // Output #0 should alwasy be OP_RETURN
-    { address: address, value: 546 }
-  ]
+    { address: address, value: 546 },
+  ];
 
-  const { inputs, outputs } = await addFeeToTx(NETWORK, address, utxos, nonFeeInputs, nonFeeOutputs)
+  const { inputs, outputs } = await addFeeToTx(
+    NETWORK,
+    address,
+    utxos,
+    nonFeeInputs,
+    nonFeeOutputs
+  );
 
   const txid = await client.createAndBroadcastRawTx({
     account: creatorAccount.p2tr(),
     inputs,
-    outputs
-  })
+    outputs,
+  });
 
-  console.log(`TXID : ${txid}`)
+  console.log(`TXID : ${txid}`);
 }
 
-
 // deployFreemintCompress()
-mint()
+mint();

@@ -591,7 +591,7 @@ export const schema: any = {
                   struct: {
                     nft: {
                       struct: {
-                        asset_image: { array: { type: 'u8', showLen: true } },
+                        asset: { array: { type: 'u8', showLen: true } },
                         supply_cap: { option: { array: { type: 'u8' } } }, // VARUINT
                         live_time: { array: { type: 'u8' } }, // VARINT
                         end_time: { option: { array: { type: 'u8' } } }, // VARINT

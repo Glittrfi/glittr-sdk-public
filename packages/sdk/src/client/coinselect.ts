@@ -1,7 +1,7 @@
 import { AddressType } from "bitcoin-address-validation";
 import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
-import { networks, payments } from "bitcoinjs-lib";
+import { payments } from "bitcoinjs-lib";
 import { OpReturnMessage } from "../transaction";
 import { electrumFetchTxHex, electrumFetchNonGlittrUtxos } from "../utils/electrum";
 import { getInputBytes, getOutputBytes, getTransactionBytes } from "../helper/fee";

@@ -1,4 +1,5 @@
 import { U128_MAX_NUMBER, BUFFER_MAX_VARUINT_LENGTH } from "../helper/const";
+import { U128, Varuint } from "./common";
 
 export function encodeVaruint(t: number | string | bigint) {
   let n = BigInt(t);
@@ -22,10 +23,13 @@ export function encodeVaruint(t: number | string | bigint) {
   return arr.slice(0, i + 1);
 }
 
-export function decodeVaruint(buffer: Uint8Array) {
+export function decodeVaruint(varIntLike: Varuint | U128) {
+  if (typeof varIntLike == "string") {
+    return BigInt(varIntLike);
+  }
   let finalValue = BigInt(0);
-  for (let i = 0; i < buffer.length; i += 1) {
-    const byte = buffer[i]!;
+  for (let i = 0; i < varIntLike.length; i += 1) {
+    const byte = varIntLike[i]!;
     const value = byte & 0b0111_1111;
     finalValue = finalValue | (BigInt(value) << (7n * BigInt(i)));
   }

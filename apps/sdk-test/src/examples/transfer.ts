@@ -3,7 +3,7 @@ import { Account, GlittrSDK, GlittrTransaction } from "@glittr-sdk/sdk";
 const NETWORK = "testnet";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+  apiKey: "",
   // glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
   // electrumApi: "https://devnet-electrum.glittr.fi" // devnet
   glittrApi: "https://testnet-core-api.glittr.fi", // testnet

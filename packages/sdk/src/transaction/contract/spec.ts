@@ -20,6 +20,6 @@ type SpecContractType =
 
 export type SpecContract = {
   spec: SpecContractType;
-  pointer?: Varuint;
+  pointer?: Varuint | number;
   block_tx?: BlockTxTuple;
 };

@@ -4,6 +4,7 @@ import {
   Fraction,
   RelativeOrAbsoluteBlockHeight,
   Varuint,
+  U128,
 } from "../utils";
 
 type VestingPlan =
@@ -46,12 +47,12 @@ export type AllocationType =
   }
 
 export type Preallocated = {
-  allocations: Map<Varuint, AllocationType>;
+  allocations: Map<Varuint, AllocationType> | Map<U128, AllocationType>;
   vesting_plan?: VestingPlan;
 };
 export type FreeMint = {
-  supply_cap?: Varuint;
-  amount_per_mint: Varuint;
+  supply_cap?: Varuint | U128;
+  amount_per_mint: Varuint | U128;
 };
 
 export type PurchaseBurnSwap = {
@@ -67,7 +68,7 @@ export type ArgsCommitment = {
   } | {
     number: Uint8Array;
     spacers?: undefined;
-  };
+  } | string;
   string: string
 }
 

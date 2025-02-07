@@ -1,4 +1,4 @@
-import { Fraction, RelativeOrAbsoluteBlockHeight, Varuint } from "../../utils";
+import { Fraction, RelativeOrAbsoluteBlockHeight, U128, Varuint } from "../../utils";
 import {
   Commitment,
   FreeMint,
@@ -48,7 +48,7 @@ export type BurnMechanism = {
 
 // Swap Mechanism
 export type SwapMechanism = {
-  fee?: Varuint;
+  fee?: Varuint | U128;
 };
 
 export type MintBurnAssetContract = {
@@ -58,8 +58,8 @@ export type MintBurnAssetContract = {
   } | {
     number: Uint8Array;
     spacers?: undefined;
-  };
-  supply_cap?: Varuint;
+  } | string;
+  supply_cap?: Varuint | U128;
   divisibility: number;
   live_time: RelativeOrAbsoluteBlockHeight;
   end_time?: RelativeOrAbsoluteBlockHeight;

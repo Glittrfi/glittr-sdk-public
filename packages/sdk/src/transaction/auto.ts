@@ -5,7 +5,6 @@ import { getAssetTickers, getAssetUtxos } from "../helper/asset";
 import { addFeeToTx } from "../helper/fee";
 import { electrumFetchNonGlittrUtxos } from "../utils/electrum";
 import { OracleMessageSigned } from "./calltype/types";
-import { MOAMintMechanism } from "./contract/moa";
 import { PurchaseBurnSwap } from "./shared";
 
 type TransferParams = {
@@ -69,7 +68,6 @@ class ContractDeployment {
 
     const tx: OpReturnMessage = {
       contract_call: {
-        contract: null,
         call_type: {
           mint: {
             pointer: encodeVaruint(3)
@@ -333,8 +331,13 @@ export class GlittrTransaction {
       }
     };
 
+    const embed =
+    this.client.forceCompression || this.client.network == "regtest"
+      ? await txBuilder.compress(tx)
+      : txBuilder.compile(tx);
+
     const nonFeeOutputs: Output[] = [
-      { script: await txBuilder.compress(tx), value: 0 },
+      { script: embed, value: 0 },
       ...transfers.map(t => ({
         address: t.receiver,
         value: 600

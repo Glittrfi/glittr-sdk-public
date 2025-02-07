@@ -1,8 +1,6 @@
-import { serialize } from "@glittr-sdk/borsh";
 import {
   Account,
   GlittrSDK,
-  Fraction,
   OpReturnMessage,
   electrumFetchNonGlittrUtxos,
   BitcoinUTXO,
@@ -11,7 +9,6 @@ import {
   txBuilder,
   BlockTxTuple,
   encodeVaruint,
-  schema,
   Varuint,
 } from "@glittr-sdk/sdk";
 import { AllocationType } from "@glittr-sdk/sdk/dist/transaction/shared";
@@ -19,7 +16,7 @@ import { AllocationType } from "@glittr-sdk/sdk/dist/transaction/shared";
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+  apiKey: "",
   glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
