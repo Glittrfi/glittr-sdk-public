@@ -36,14 +36,15 @@ export type CreateRawTxParams = {
   address: string;
   inputs: BitcoinUTXO[];
   outputs: Output[];
-  publicKey: string
-}
+  publicKey: string;
+};
 
 type GlittrSDKParams = {
   network: Network;
-  apiKey: string,
-  glittrApi: string,
-  electrumApi: string,
+  apiKey: string;
+  glittrApi: string;
+  electrumApi: string;
+  forceCompression?: boolean;
 };
 
 export class GlittrSDK {
@@ -51,12 +52,20 @@ export class GlittrSDK {
   apiKey: string;
   glittrApi: string;
   electrumApi: string;
+  forceCompression: boolean = false;
 
-  constructor({ network, apiKey, glittrApi, electrumApi }: GlittrSDKParams) {
+  constructor({
+    network,
+    apiKey,
+    glittrApi,
+    electrumApi,
+    forceCompression,
+  }: GlittrSDKParams) {
     this.network = network;
     this.apiKey = apiKey;
     this.glittrApi = glittrApi;
     this.electrumApi = electrumApi;
+    if (forceCompression) this.forceCompression = forceCompression;
   }
 
   async createTx({
@@ -69,7 +78,10 @@ export class GlittrSDK {
     outputs = outputs ?? [];
     const addressType = getAddressType(address);
 
-    const embed = await txBuilder.compress(tx)
+    const embed =
+      this.forceCompression || this.network != "regtest"
+        ? await txBuilder.compress(tx)
+        : txBuilder.compile(tx);
     outputs = outputs.concat({ script: embed, value: 0 });
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -124,8 +136,8 @@ export class GlittrSDK {
             hash: input.hash,
             index: input.index,
             witnessUtxo: input.witnessUtxo,
-            tapInternalKey: input.tapInternalKey
-          })
+            tapInternalKey: input.tapInternalKey,
+          });
           break;
         default:
           throw new Error(`Error Address Type not supported yet`);
@@ -152,7 +164,9 @@ export class GlittrSDK {
       hex
     );
     if (!isValidGlittrTx.is_valid)
-      throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
+      throw new Error(
+        `Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`
+      );
 
     // Broadcast TX
     const txId = await fetchPOST(`${this.electrumApi}/tx`, {}, hex);
@@ -169,7 +183,10 @@ export class GlittrSDK {
 
     const addressType = getAddressType(account.address);
 
-    const embed = await txBuilder.compress(tx)
+    const embed =
+    this.forceCompression || this.network != "regtest"
+      ? await txBuilder.compress(tx)
+      : txBuilder.compile(tx);
     outputs = [{ script: embed, value: 0 }, ...outputs];
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -181,7 +198,7 @@ export class GlittrSDK {
       account.address,
       tx,
       account.address,
-      account.keypair.publicKey.toString('hex')
+      account.keypair.publicKey.toString("hex")
     );
 
     const _inputs = coins?.inputs ?? [];
@@ -207,8 +224,8 @@ export class GlittrSDK {
             hash: input.hash,
             index: input.index,
             witnessUtxo: input.witnessUtxo,
-            tapInternalKey: input.tapInternalKey
-          })
+            tapInternalKey: input.tapInternalKey,
+          });
           break;
         default:
           throw new Error(`Error Address Type not supported yet`);
@@ -226,12 +243,9 @@ export class GlittrSDK {
 
     if (addressType === AddressType.p2tr) {
       const tweakedSigner = account.keypair.tweak(
-        crypto.taggedHash(
-          'TapTweak',
-          account.keypair.publicKey.subarray(1, 33)
-        )
-      )
-      psbt.signAllInputs(tweakedSigner)
+        crypto.taggedHash("TapTweak", account.keypair.publicKey.subarray(1, 33))
+      );
+      psbt.signAllInputs(tweakedSigner);
     } else {
       psbt.signAllInputs(account.keypair);
 
@@ -251,7 +265,9 @@ export class GlittrSDK {
       hex
     );
     if (!isValidGlittrTx.is_valid)
-    throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
+      throw new Error(
+        `Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`
+      );
 
     // Broadcast TX
     const txId = await fetchPOST(`${this.electrumApi}/tx`, {}, hex);
@@ -278,7 +294,11 @@ export class GlittrSDK {
     for (const input of inputs) {
       switch (addressType) {
         case AddressType.p2pkh:
-          const txHex = await electrumFetchTxHex(this.electrumApi, this.apiKey, input.txid);
+          const txHex = await electrumFetchTxHex(
+            this.electrumApi,
+            this.apiKey,
+            input.txid
+          );
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
@@ -300,18 +320,22 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
-          const tapInternalKey = account.keypair.publicKey.subarray(1, 33)
-          const p2trPayments = payments.p2tr({ address: account.address, network: getBitcoinNetwork(this.network), internalPubkey: tapInternalKey })
-          const p2trOutput = p2trPayments.output!
+          const tapInternalKey = account.keypair.publicKey.subarray(1, 33);
+          const p2trPayments = payments.p2tr({
+            address: account.address,
+            network: getBitcoinNetwork(this.network),
+            internalPubkey: tapInternalKey,
+          });
+          const p2trOutput = p2trPayments.output!;
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
             witnessUtxo: {
               script: p2trOutput,
-              value: input.value
+              value: input.value,
             },
             tapInternalKey,
-          })
+          });
       }
     }
 
@@ -325,12 +349,9 @@ export class GlittrSDK {
 
     if (addressType === AddressType.p2tr) {
       const tweakedSigner = account.keypair.tweak(
-        crypto.taggedHash(
-          'TapTweak',
-          account.keypair.publicKey.subarray(1, 33)
-        )
-      )
-      psbt.signAllInputs(tweakedSigner)
+        crypto.taggedHash("TapTweak", account.keypair.publicKey.subarray(1, 33))
+      );
+      psbt.signAllInputs(tweakedSigner);
     } else {
       psbt.signAllInputs(account.keypair);
 
@@ -350,7 +371,9 @@ export class GlittrSDK {
       hex
     );
     if (!isValidGlittrTx.is_valid)
-      throw new Error(`Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`)
+      throw new Error(
+        `Invalid Glittr TX Format : ${JSON.stringify(isValidGlittrTx)}`
+      );
     // console.error(`Invalid Glittr TX Format : ${isValidGlittrTx}`)
 
     const txId = await fetchPOST(
@@ -365,9 +388,9 @@ export class GlittrSDK {
     address,
     inputs,
     outputs,
-    publicKey
+    publicKey,
   }: CreateRawTxParams) {
-    const addressType = getAddressType(address)
+    const addressType = getAddressType(address);
 
     if (inputs && inputs.length === 0) {
       throw new Error("No inputs provided");
@@ -382,7 +405,11 @@ export class GlittrSDK {
     for (const input of inputs) {
       switch (addressType) {
         case AddressType.p2pkh:
-          const txHex = await electrumFetchTxHex(this.electrumApi, this.apiKey, input.txid);
+          const txHex = await electrumFetchTxHex(
+            this.electrumApi,
+            this.apiKey,
+            input.txid
+          );
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
@@ -404,18 +431,22 @@ export class GlittrSDK {
           });
           break;
         case AddressType.p2tr:
-          const tapInternalKey = Buffer.from(publicKey, 'hex').subarray(1, 33)
-          const p2trPayments = payments.p2tr({ address, network: getBitcoinNetwork(this.network), internalPubkey: tapInternalKey })
-          const p2trOutput = p2trPayments.output!
+          const tapInternalKey = Buffer.from(publicKey, "hex").subarray(1, 33);
+          const p2trPayments = payments.p2tr({
+            address,
+            network: getBitcoinNetwork(this.network),
+            internalPubkey: tapInternalKey,
+          });
+          const p2trOutput = p2trPayments.output!;
           psbt.addInput({
             hash: input.txid,
             index: input.vout,
             witnessUtxo: {
               script: p2trOutput,
-              value: input.value
+              value: input.value,
             },
             tapInternalKey,
-          })
+          });
       }
     }
 
@@ -427,6 +458,6 @@ export class GlittrSDK {
       }
     }
 
-    return psbt
+    return psbt;
   }
 }

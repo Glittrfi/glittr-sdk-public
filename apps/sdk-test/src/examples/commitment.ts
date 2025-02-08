@@ -10,13 +10,12 @@ import {
   BlockTxTuple,
   encryptMessage,
   encodeVaruint,
-  encodeBase26,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+  apiKey: '',
   glittrApi: "https://devnet-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
@@ -40,13 +39,13 @@ async function deployCommitmentFreeMintContract() {
           live_time: 0,
           mint_mechanism: {
             free_mint: {
-              amount_per_mint: encodeVaruint(1)
+              amount_per_mint: "1"
             }
           },
           commitment: {
             public_key: Array.from(creatorAccount.p2pkh().keypair.publicKey),
             args: {
-              fixed_string: encodeBase26("GLITTRAIRDROP"),
+              fixed_string: "GLITTRAIRDROP",
               string: "username"
             }
           }
@@ -118,5 +117,5 @@ async function mint() {
   console.log(`TXID : ${txid}`)
 }
 
-// deployCommitmentFreeMintContract()
-mint()
+deployCommitmentFreeMintContract()
+// mint()

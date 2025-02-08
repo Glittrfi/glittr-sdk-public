@@ -12,6 +12,7 @@ import { schema } from "./schema";
 import { compress } from 'brotli-compress'
 import { script } from "bitcoinjs-lib";
 import { encodeBase26, encodeGlittrData, encodeVaruint, Header } from "../utils";
+import { transformOpReturnMessage } from "./convert";
 
 interface TxBuilderStatic {
   transfer(params: TransferParams): OpReturnMessage;
@@ -175,12 +176,11 @@ class TxBuilderClass {
     const VERSION = 0;
 
     try {
-
       if (!message || Object.keys(message).length === 0) {
         throw new Error("No message to compile");
       }
 
-      const encoded = serialize(schema, message as any)
+      const encoded = serialize(schema, transformOpReturnMessage(message) as any)
       const compressed = await compress(encoded)
 
       const useCompressed = encoded.length > compressed.length;

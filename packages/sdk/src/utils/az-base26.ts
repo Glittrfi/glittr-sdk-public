@@ -1,5 +1,4 @@
 import { U128_MAX_NUMBER } from "../helper/const";
-import { Varuint } from "./common";
 import { encodeVaruint } from "./varuint";
 
 export function encodeBase26(str: string) {
