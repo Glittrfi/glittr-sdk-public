@@ -8,6 +8,7 @@ import {
   addFeeToTx,
   txBuilder,
   BlockTxTuple,
+  encodeVaruint,
 } from "@glittr-sdk/sdk";
 import {
   OracleMessage,
@@ -19,7 +20,7 @@ import { sha256 } from "bitcoinjs-lib/src/crypto";
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+  apiKey: "",
   glittrApi: "https://devnet-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
@@ -78,7 +79,7 @@ async function deployUsdContract() {
           live_time: 0,
           mint_mechanism: {
             purchase: {
-              input_asset: 'raw_btc',
+              input_asset: { raw_btc: {} },
               ratio: {
                 oracle: {
                   setting: {
@@ -95,7 +96,7 @@ async function deployUsdContract() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, creatorAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, creatorAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 },
@@ -114,7 +115,7 @@ async function deployUsdContract() {
 }
 
 async function mint() {
-  const contract: BlockTxTuple = [101999, 1]
+  const contract: BlockTxTuple = [encodeVaruint(101999), encodeVaruint(1)]
 
   // Get block height
   const blockHeightFetch = await fetch(`${client.electrumApi}/blocks/tip/height`)
@@ -127,7 +128,7 @@ async function mint() {
 
   const oracleMessage: OracleMessage = {
     asset_id: "btc",
-    ratio: [70000, 1], // 1 sats = 70000 asset
+    ratio: [encodeVaruint(70000), encodeVaruint(1)], // 1 sats = 70000 asset
     block_height: blockHeight,
   };
 
@@ -146,14 +147,14 @@ async function mint() {
       contract: contract,
       call_type: {
         mint: {
-          pointer: 1, // Points to the mint receiver's index in Output array
+          pointer: encodeVaruint(1), // Points to the mint receiver's index in Output array
           oracle_message: oracleSignedMessage
         }
       }
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, minterAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, minterAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }, // Output #0 should always be OP_RETURN

@@ -1,18 +1,20 @@
-import { OutPoint, Fraction, U128, Pubkey } from "../../utils";
+import { OutPoint, Fraction, U128, Pubkey, Varuint } from "../../utils";
 
 type AssertValues = {
-  input_values?: U128[]
-  total_collateralized?: U128[]
-  min_out_value?: U128[]
+  input_values?: Varuint[] | U128[]
+  total_collateralized?: Varuint[] | U128[]
+  min_out_value?: Varuint[] | U128[]
 }
 
 export type OracleMessage = {
   input_outpoint?: OutPoint;
-  min_in_value?: U128;
-  out_value?: U128;
+  min_in_value?: Varuint | U128;
+  out_value?: Varuint | U128;
   asset_id?: string;
   ratio?: Fraction;
-  block_height: number;
+  ltv?: Fraction;
+  outstanding?: Varuint | number;
+  block_height: Varuint | number;
 };
 
 export type OracleMessageSigned = {
@@ -21,24 +23,25 @@ export type OracleMessageSigned = {
 };
 
 export type MintBurnOption = {
-  pointer?: number;
+  pointer?: Varuint | number;
   oracle_message?: OracleMessageSigned;
-  pointer_to_key?: number;
+  pointer_to_key?: Varuint | number;
   assert_values?: AssertValues;
   commitment_message?: CommitmentMessage;
 };
 
 export type SwapOption = {
-  pointer: number;
+  pointer: Varuint | number;
+  assert_values?: AssertValues;
 };
 
 export type OpenAccountOption = {
-  pointer_to_key: number;
-  share_amount: U128
+  pointer_to_key: Varuint | number;
+  share_amount: Varuint | U128
 }
 
 export type CloseAccountOption = {
-  pointer: number;
+  pointer: Varuint | number;
 }
 
 export type CommitmentMessage = {

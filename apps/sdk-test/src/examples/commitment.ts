@@ -9,12 +9,13 @@ import {
   txBuilder,
   BlockTxTuple,
   encryptMessage,
+  encodeVaruint,
 } from "@glittr-sdk/sdk";
 
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
+  apiKey: '',
   glittrApi: "https://devnet-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
@@ -53,7 +54,7 @@ async function deployCommitmentFreeMintContract() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, creatorAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, creatorAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 },
@@ -73,7 +74,7 @@ async function deployCommitmentFreeMintContract() {
 
 async function mint() {
   // Contract from deployCommitmentFreeMintContract() result
-  const contract: BlockTxTuple = [187143, 1]
+  const contract: BlockTxTuple = [encodeVaruint(187143), encodeVaruint(1)]
 
   const creatorPubkey = new Uint8Array(creatorAccount.p2pkh().keypair.publicKey)
 
@@ -86,7 +87,7 @@ async function mint() {
       contract,
       call_type: {
         mint: {
-          pointer: 1,
+          pointer: encodeVaruint(1),
           commitment_message: {
             public_key: Array.from(creatorAccount.p2pkh().keypair.publicKey),
             args: Array.from(encryptedCommitment)
@@ -96,7 +97,7 @@ async function mint() {
     }
   }
 
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, minterAccount.p2pkh().address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, minterAccount.p2pkh().address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 },
@@ -116,5 +117,5 @@ async function mint() {
   console.log(`TXID : ${txid}`)
 }
 
-// deployCommitmentFreeMintContract()
-mint()
+deployCommitmentFreeMintContract()
+// mint()

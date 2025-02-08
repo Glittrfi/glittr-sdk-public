@@ -1,0 +1,13 @@
+{
+  "name": "cjs-example",
+  "private": true,
+  "version": "2.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "borsh": "^2"
+  }
+}

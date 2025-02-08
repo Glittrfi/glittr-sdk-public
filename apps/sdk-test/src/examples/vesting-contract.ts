@@ -1,7 +1,6 @@
 import {
   Account,
   GlittrSDK,
-  Fraction,
   OpReturnMessage,
   electrumFetchNonGlittrUtxos,
   BitcoinUTXO,
@@ -9,13 +8,16 @@ import {
   addFeeToTx,
   txBuilder,
   BlockTxTuple,
+  encodeVaruint,
+  Varuint,
 } from "@glittr-sdk/sdk";
+import { AllocationType } from "@glittr-sdk/sdk/dist/transaction/shared";
 
 const NETWORK = "regtest";
 const client = new GlittrSDK({
   network: NETWORK,
-  apiKey: '1c4938fb-1a10-48c2-82eb-bd34eeb05b20',
-  glittrApi: "https://devnet-core-api.glittr.fi", // devnet
+  apiKey: "",
+  glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
   electrumApi: "https://devnet-electrum.glittr.fi" // devnet
 });
 
@@ -40,33 +42,34 @@ async function deployVestingContract() {
     reserveAccount.p2pkh().keypair.publicKey
   );
 
-  const quarterlyVesting: [Fraction, number][] = [
-    [[25, 100], -1], // 25% unlocked after 1 blocks
-    [[25, 100], -2], // 25% unlocked after 2 blocks
-    [[25, 100], -3], // 25% unlocked after 3 blocks
-    [[25, 100], -4], // 25% unlocked after 4 blocks
-  ];
+  const allocations = new Map<Varuint, AllocationType>()
+  allocations.set(encodeVaruint(200), {vec_pubkey: [receiver1PublicKey]})
+  allocations.set(encodeVaruint(400), {vec_pubkey: [receiver2PublicKey]})
+
+  const quarterlyVesting = [
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -4 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -3 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -2 },
+    { ratio: [encodeVaruint(1), encodeVaruint(4)], tolerance: -1 },
+  ]
 
   const tx: OpReturnMessage = {
     contract_creation: {
       contract_type: {
         moa: {
-          divisibility: 100,
+          divisibility: 18,
           live_time: 0,
-          supply_cap: 1000n.toString(),
+          supply_cap: encodeVaruint(1000),
           mint_mechanism: {
             preallocated: {
-              allocations: {
-                "100": [receiver1PublicKey],
-                "200": [receiver2PublicKey]
-              },
+              allocations,
               vesting_plan: {
                 scheduled: quarterlyVesting
               }
             },
             free_mint: {
-              supply_cap: 700n.toString(),
-              amount_per_mint: 1n.toString()
+              supply_cap: encodeVaruint(400),
+              amount_per_mint: encodeVaruint(1),
             }
           }
         }
@@ -75,10 +78,10 @@ async function deployVestingContract() {
   }
 
   const address = account.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
-    { script: txBuilder.compile(tx), value: 0 }, // Output #0 should always be OP_RETURN
+    { script: await txBuilder.compress(tx), value: 0 }, // Output #0 should always be OP_RETURN
     { address: address, value: 546 }
   ]
 
@@ -94,21 +97,21 @@ async function deployVestingContract() {
 }
 
 async function vestedMint() {
-  const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
+  const contract: BlockTxTuple = [encodeVaruint(101832), encodeVaruint(1)]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
   const tx: OpReturnMessage = {
     contract_call: {
       contract,
       call_type: {
         mint: {
-          pointer: 1 // Points to the mint receiver's index in Output array
+          pointer: encodeVaruint(1) // Points to the mint receiver's index in Output array
         }
       }
     }
   }
 
   const address = reserveAccount.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }, // Output #0 should alwasy be OP_RETURN
@@ -127,21 +130,21 @@ async function vestedMint() {
 }
 
 async function freeMint() {
-  const contract: BlockTxTuple = [101832, 1]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
+  const contract: BlockTxTuple = [encodeVaruint(101832), encodeVaruint(1)]; // https://explorer.glittr.fi/tx/8bb7f3332eb1c50d25ae31c1a06c2af56dc7e2d2f37b03c275cf1d547bbdcc21
 
   const tx: OpReturnMessage = {
     contract_call: {
       contract,
       call_type: {
         mint: {
-          pointer: 1 // Points to the mint receiver's index in Output array
+          pointer: encodeVaruint(1) // Points to the mint receiver's index in Output array
         }
       }
     }
   }
 
   const address = freeMintAccount.p2pkh().address
-  const utxos = await electrumFetchNonGlittrUtxos(client.electrumApi, client.apiKey, address)
+  const utxos = await electrumFetchNonGlittrUtxos(client, address)
   const nonFeeInputs: BitcoinUTXO[] = []
   const nonFeeOutputs: Output[] = [
     { script: txBuilder.compile(tx), value: 0 }, // Output #0 should alwasy be OP_RETURN

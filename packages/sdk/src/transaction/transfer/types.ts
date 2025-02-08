@@ -1,7 +1,7 @@
-import { BlockTxTuple, U128 } from "../../utils";
+import { BlockTxTuple, U128, Varuint } from "../../utils";
 
 export type TxTypeTransfer = {
   asset: BlockTxTuple;
-  output: number;
-  amount: U128;
+  output: Varuint | number;
+  amount: Varuint | U128;
 };

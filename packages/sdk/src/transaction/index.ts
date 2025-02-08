@@ -1,4 +1,4 @@
-import { encodeGlittrData } from "../utils/encode";
+import { serialize } from "@glittr-sdk/borsh";
 import {
   ContractCallParams,
   ContractInstantiateParams,
@@ -8,6 +8,11 @@ import {
   TransferParams,
 } from "./message";
 import { OpReturnMessage } from "./types";
+import { schema } from "./schema";
+import { compress } from 'brotli-compress'
+import { script } from "bitcoinjs-lib";
+import { encodeBase26, encodeGlittrData, encodeVaruint, Header } from "../utils";
+import { transformOpReturnMessage } from "./convert";
 
 interface TxBuilderStatic {
   transfer(params: TransferParams): OpReturnMessage;
@@ -18,6 +23,7 @@ interface TxBuilderStatic {
   createPool(params: CreatePoolContractParams): OpReturnMessage;
   customMessage(params: OpReturnMessage): OpReturnMessage;
   compile(message: OpReturnMessage): Buffer;
+  compress(message: OpReturnMessage): Promise<Buffer>;
 }
 
 class TxBuilderClass {
@@ -50,8 +56,8 @@ class TxBuilderClass {
             mba: {
               divisibility: params.divisibility,
               live_time: params.live_time,
-              supply_cap: params.supply_cap,
-              ticker: params.ticker,
+              supply_cap: params.supply_cap ? encodeVaruint(params.supply_cap) : undefined,
+              ticker: params.ticker ? encodeBase26(params.ticker) : undefined,
               mint_mechanism: params.mint_mechanism,
               burn_mechanism: params.burn_mechanism,
               swap_mechanism: {}, // TODO
@@ -66,8 +72,8 @@ class TxBuilderClass {
             moa: {
               divisibility: params.divisibility,
               live_time: params.live_time,
-              supply_cap: params.supply_cap,
-              ticker: params.ticker,
+              supply_cap: params.supply_cap ? encodeVaruint(params.supply_cap) : undefined,
+              ticker: params.ticker ? encodeBase26(params.ticker) : undefined,
               mint_mechanism: params.mint_mechanism,
             },
           },
@@ -85,12 +91,12 @@ class TxBuilderClass {
           moa: {
             divisibility: params.divisibility,
             live_time: params.live_time,
-            ticker: params.ticker,
-            supply_cap: params.supply_cap,
+            ticker: params.ticker ? encodeBase26(params.ticker) : undefined,
+            supply_cap: params.supply_cap ? encodeVaruint(params.supply_cap) : undefined,
             mint_mechanism: {
               free_mint: {
-                amount_per_mint: params.amount_per_mint,
-                supply_cap: params.supply_cap,
+                amount_per_mint: encodeVaruint(params.amount_per_mint),
+                supply_cap: params.supply_cap ? encodeVaruint(params.supply_cap) : undefined,
               },
             },
           },
@@ -108,8 +114,8 @@ class TxBuilderClass {
           moa: {
             divisibility: params.divisibility,
             live_time: params.live_time,
-            ticker: params.ticker,
-            supply_cap: params.supply_cap,
+            ticker: params.ticker ? encodeBase26(params.ticker) : undefined,
+            supply_cap: params.supply_cap ? encodeVaruint(params.supply_cap) : undefined,
             mint_mechanism: {
               purchase: {
                 input_asset: params.payment.input_asset,
@@ -132,7 +138,7 @@ class TxBuilderClass {
           mba: {
             divisibility: params.divisibility,
             live_time: params.live_time,
-            supply_cap: params.supply_cap,
+            supply_cap: params.supply_cap ? encodeVaruint(params.supply_cap) : undefined,
             mint_mechanism: {
               collateralized: {
                 _mutable_assets: true, // TODO
@@ -165,6 +171,33 @@ class TxBuilderClass {
     }
     return encodeGlittrData(JSON.stringify(message));
   }
+
+  static async compress(message: OpReturnMessage): Promise<Buffer> {
+    const VERSION = 0;
+
+    try {
+      if (!message || Object.keys(message).length === 0) {
+        throw new Error("No message to compile");
+      }
+
+      const encoded = serialize(schema, transformOpReturnMessage(message) as any)
+      const compressed = await compress(encoded)
+
+      const useCompressed = encoded.length > compressed.length;
+      let data = encoded;
+      if(useCompressed){
+        data = compressed;
+      }
+      const header = new Header(VERSION, useCompressed);
+      const payload = Buffer.concat([header.toBytes(), data]);
+
+      const glittrFlag = Buffer.from("GLITTR", "utf8"); // Prefix
+      const embed = script.compile([106, glittrFlag, payload]);
+      return embed
+    } catch (error) {
+      throw new Error(`Error compiling OP_RETURN message ${error}`)
+    }
+  }
 }
 
 export const txBuilder: TxBuilderStatic = TxBuilderClass;
@@ -172,3 +205,4 @@ export const txBuilder: TxBuilderStatic = TxBuilderClass;
 export * from "./types";
 export * from "./message";
 export * from './auto'
+export * from './schema'
