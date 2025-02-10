@@ -105,10 +105,10 @@ function transformNFTContract(contract: NftAssetContract): NftAssetContract {
 
   return {
     ...contract,
-    supply_cap: contract.supply_cap && convertToVaruint(contract.supply_cap),
+    supply_cap: contract.supply_cap !== undefined ? convertToVaruint(contract.supply_cap) : undefined,
     live_time: convertToVarint(contract.live_time),
     end_time: contract.end_time && convertToVarint(contract.end_time),
-    pointer: contract.pointer && convertToVaruint(contract.pointer),
+    pointer: contract.pointer !== undefined ? convertToVaruint(contract.pointer) : undefined,
   };
 }
 
@@ -117,7 +117,7 @@ function transformSpecContract(contract: SpecContract): SpecContract {
 
   return {
     ...contract,
-    pointer: contract.pointer && convertToVaruint(contract.pointer),
+    pointer: contract.pointer !== undefined ? convertToVaruint(contract.pointer): undefined,
     block_tx: contract.block_tx && transformBlockTxTuple(contract.block_tx),
   };
 }
@@ -182,15 +182,15 @@ export function transformOpReturnMessage(
               mint: {
                 ...transformed.contract_call.call_type.mint,
                 pointer:
-                  transformed.contract_call.call_type.mint.pointer &&
+                  transformed.contract_call.call_type.mint.pointer !== undefined ?
                   convertToVaruint(
                     transformed.contract_call.call_type.mint.pointer
-                  ),
+                  ) : undefined,
                 pointer_to_key:
-                  transformed.contract_call.call_type.mint.pointer_to_key &&
+                  transformed.contract_call.call_type.mint.pointer_to_key !== undefined ?
                   convertToVaruint(
                     transformed.contract_call.call_type.mint.pointer_to_key
-                  ),
+                  ) : undefined,
                 assert_values: transformed.contract_call.call_type.mint
                   .assert_values && {
                   ...transformed.contract_call.call_type.mint.assert_values,
@@ -215,15 +215,15 @@ export function transformOpReturnMessage(
               burn: {
                 ...transformed.contract_call.call_type.burn,
                 pointer:
-                  transformed.contract_call.call_type.burn.pointer &&
+                  transformed.contract_call.call_type.burn.pointer !== undefined ?
                   convertToVaruint(
                     transformed.contract_call.call_type.burn.pointer
-                  ),
+                  ) : undefined,
                 pointer_to_key:
-                  transformed.contract_call.call_type.burn.pointer_to_key &&
+                  transformed.contract_call.call_type.burn.pointer_to_key !== undefined ?
                   convertToVaruint(
                     transformed.contract_call.call_type.burn.pointer_to_key
-                  ),
+                  ) : undefined,
                 assert_values: transformed.contract_call.call_type.burn
                   .assert_values && {
                   ...transformed.contract_call.call_type.burn.assert_values,
@@ -248,7 +248,6 @@ export function transformOpReturnMessage(
               swap: {
                 ...transformed.contract_call.call_type.swap,
                 pointer:
-                  transformed.contract_call.call_type.swap.pointer &&
                   convertToVaruint(
                     transformed.contract_call.call_type.swap.pointer
                   ),
