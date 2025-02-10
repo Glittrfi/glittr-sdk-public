@@ -3,8 +3,15 @@ import { getAddressType } from "../utils/address";
 import { BitcoinUTXO, Output } from "../utxo";
 import { payments } from "bitcoinjs-lib";
 import { OpReturnMessage } from "../transaction";
-import { electrumFetchTxHex, electrumFetchNonGlittrUtxos } from "../utils/electrum";
-import { getInputBytes, getOutputBytes, getTransactionBytes } from "../helper/fee";
+import {
+  electrumFetchTxHex,
+  electrumFetchNonGlittrUtxos,
+} from "../utils/electrum";
+import {
+  getInputBytes,
+  getOutputBytes,
+  getTransactionBytes,
+} from "../helper/fee";
 import { fetchGET } from "../utils/fetch";
 import { GlittrSDK } from ".";
 import { decodeVaruint, encodeVaruint, getBitcoinNetwork } from "../utils";
@@ -35,17 +42,21 @@ function _sumValues(data: BitcoinUTXO[] | Output[]) {
 function _isTxContainsOnlyTransfer(tx: OpReturnMessage) {
   // Check if tx has exactly one key and it's 'transfer'
   const keys = Object.keys(tx);
-  if (keys.length === 1 && keys[0] === 'transfer' && tx.transfer?.transfers) {
-    return tx.transfer.transfers.map(transfer => ({
+  if (keys.length === 1 && keys[0] === "transfer" && tx.transfer?.transfers) {
+    return tx.transfer.transfers.map((transfer) => ({
       asset: transfer.asset,
-      amount: transfer.amount
+      amount: transfer.amount,
     }));
   }
   return null;
 }
 
 function _isTxContainsMintContractCall(tx: OpReturnMessage) {
-  if (tx.contract_call && tx.contract_call.call_type && 'mint' in tx.contract_call.call_type) {
+  if (
+    tx.contract_call &&
+    tx.contract_call.call_type &&
+    "mint" in tx.contract_call.call_type
+  ) {
     const mintCall = tx.contract_call.call_type.mint;
     return {
       contract: tx.contract_call.contract,
@@ -63,7 +74,7 @@ export async function coinSelect(
   address: string,
   tx: OpReturnMessage,
   changeOutputAddress?: string,
-  publicKey?: string,
+  publicKey?: string
 ) {
   let txBytes = getTransactionBytes(inputs, outputs);
   let totalInputValue = inputs.reduce((prev, input) => prev + input.value, 0);
@@ -83,13 +94,13 @@ export async function coinSelect(
     try {
       const asset = await fetchGET(
         `${client.glittrApi}/assets/${txId}/${vout}`,
-        { Authorization: `Bearer ${client.apiKey}` },
-      )
+        { Authorization: `Bearer ${client.apiKey}` }
+      );
       return JSON.stringify(asset);
     } catch (e) {
       throw new Error(`Error fetching Glittr Asset : ${e}`);
     }
-  }
+  };
   // Separate UTXOs based on asset presence
   const utxosGlittr: BitcoinUTXO[] = [];
   const nonUtxosGlittr: BitcoinUTXO[] = [];
@@ -110,8 +121,8 @@ export async function coinSelect(
         ...utxo,
         assets: Object.entries(asset.assets.list).map(([assetId, amount]) => ({
           asset: assetId,
-          amount: amount as number
-        }))
+          amount: amount as number,
+        })),
       };
       utxosGlittr.push(glittrUtxo);
     }
@@ -133,18 +144,17 @@ export async function coinSelect(
     }
   };
 
-
   if (_isTxContainsOnlyTransfer(tx)) {
     const transferAssets = _isTxContainsOnlyTransfer(tx);
     if (!transferAssets) throw new Error("Transfer TX invalid");
 
-
     // Filter utxosGlittr to only include UTXOs that contain the required transfer assets
-    const relevantUtxos = utxosGlittr.filter(utxo => {
-      return transferAssets?.some(transfer =>
-        utxo.assets?.some(asset =>
-          Array.isArray(transfer.asset) &&
-          asset.asset === `${transfer.asset[0]}:${transfer.asset[1]}`
+    const relevantUtxos = utxosGlittr.filter((utxo) => {
+      return transferAssets?.some((transfer) =>
+        utxo.assets?.some(
+          (asset) =>
+            Array.isArray(transfer.asset) &&
+            asset.asset === `${transfer.asset[0]}:${transfer.asset[1]}`
           // && BigInt(asset.amount) >= BigInt(transfer.amount)
         )
       );
@@ -155,14 +165,14 @@ export async function coinSelect(
     // Handle if input asset is enough or more
     const getInputAssetSum = (assetId: string) => {
       return inputs.reduce((sum, input) => {
-        const matchingAsset = input.assets?.find(a => a.asset === assetId);
+        const matchingAsset = input.assets?.find((a) => a.asset === assetId);
         return sum + BigInt(matchingAsset?.amount || 0);
       }, BigInt(0));
-    }
+    };
 
     // Check if glittr asset inputs are enough
     for (const { asset, amount } of transferAssets) {
-      const _amount = decodeVaruint(amount)
+      const _amount = decodeVaruint(amount);
       const assetId = `${asset[0]}:${asset[1]}`;
 
       // If input asset is enough, continue to next asset
@@ -173,14 +183,16 @@ export async function coinSelect(
       // Loop through relevant UTXOs till input asset is enough or more
       for (const utxo of relevantUtxos) {
         if (getInputAssetSum(assetId) >= BigInt(_amount)) break;
-        if (inputs.some(input => input.txid === utxo.txid)) continue;
+        if (inputs.some((input) => input.txid === utxo.txid)) continue;
 
         addUtxosToInputs([utxo], feeRate);
       }
 
       // If input asset is still not enough, throw error
       if (getInputAssetSum(assetId) < BigInt(_amount)) {
-        throw new Error(`Insufficient balance for asset ${assetId}. Required: ${_amount}, Available: ${getInputAssetSum(assetId)}`);
+        throw new Error(
+          `Insufficient balance for asset ${assetId}. Required: ${_amount}, Available: ${getInputAssetSum(assetId)}`
+        );
       }
 
       const excessAssetValue = getInputAssetSum(assetId) - BigInt(_amount);
@@ -189,8 +201,11 @@ export async function coinSelect(
         // - add excess amount transfer tx into transfer.transfers
         tx?.transfer?.transfers.push({
           asset: asset,
-          amount: encodeVaruint(excessAssetValue),
-          output: encodeVaruint(outputs.length),
+          amount:
+            client.forceCompression || client.network != "regtest"
+              ? encodeVaruint(excessAssetValue)
+              : excessAssetValue.toString(),
+          output: client.forceCompression || client.network != "regtest" ? encodeVaruint(outputs.length) : outputs.length,
         });
 
         // - add output for excess amount to the sender address
@@ -226,7 +241,11 @@ export async function coinSelect(
     switch (addressType) {
       case AddressType.p2pkh:
       case AddressType.p2sh:
-        const txHex = await electrumFetchTxHex(client.electrumApi, client.apiKey, utxo.txid);
+        const txHex = await electrumFetchTxHex(
+          client.electrumApi,
+          client.apiKey,
+          utxo.txid
+        );
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -234,7 +253,10 @@ export async function coinSelect(
         });
         break;
       case AddressType.p2wpkh:
-        const paymentOutput = payments.p2wpkh({ address, network: getBitcoinNetwork(client.network) }).output!;
+        const paymentOutput = payments.p2wpkh({
+          address,
+          network: getBitcoinNetwork(client.network),
+        }).output!;
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -245,7 +267,10 @@ export async function coinSelect(
         });
         break;
       case AddressType.p2tr:
-        const p2trOutput = payments.p2tr({ address, network: getBitcoinNetwork(client.network) }).output!;
+        const p2trOutput = payments.p2tr({
+          address,
+          network: getBitcoinNetwork(client.network),
+        }).output!;
         utxoInputs.push({
           hash: utxo.txid,
           index: utxo.vout,
@@ -253,8 +278,10 @@ export async function coinSelect(
             script: p2trOutput,
             value: utxo.value,
           },
-          tapInternalKey: publicKey ? Buffer.from(publicKey, 'hex').subarray(1, 33) : undefined
-        })
+          tapInternalKey: publicKey
+            ? Buffer.from(publicKey, "hex").subarray(1, 33)
+            : undefined,
+        });
         break;
     }
   }

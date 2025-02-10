@@ -1,4 +1,4 @@
-import { BitcoinUTXO, BlockTxTuple, encodeBase26, encodeVarint, encodeVaruint, OpReturnMessage, Output, txBuilder, Varuint } from "..";
+import { BitcoinUTXO, BlockTxTuple, OpReturnMessage, Output, txBuilder, Varuint } from "..";
 import { Account } from "../account";
 import { GlittrSDK } from "../client";
 import { getAssetTickers, getAssetUtxos } from "../helper/asset";
@@ -70,7 +70,7 @@ class ContractDeployment {
       contract_call: {
         call_type: {
           mint: {
-            pointer: encodeVaruint(3)
+            pointer: 3
           }
         }
       },
@@ -78,13 +78,13 @@ class ContractDeployment {
         contract_type: {
           mba: {
             divisibility: 18,
-            live_time: encodeVarint(0),
+            live_time: 0,
             mint_mechanism: {
               collateralized: {
                 _mutable_assets: false,
                 input_assets: [
-                  { glittr_asset: [encodeVaruint(block1!), encodeVaruint(txIndex1!)] },
-                  { glittr_asset: [encodeVaruint(block2!), encodeVaruint(txIndex2!)] }
+                  { glittr_asset: [block1!, txIndex1!] },
+                  { glittr_asset: [block2!, txIndex2!] }
                 ],
                 mint_structure: {
                   proportional: {
@@ -95,21 +95,21 @@ class ContractDeployment {
             },
             burn_mechanism: {},
             swap_mechanism: {},
-            ticker: encodeBase26(assetTickers.join('-'))
+            ticker: assetTickers.join('-')
           }
         }
       },
       transfer: {
         transfers: [
           {
-            amount: encodeVaruint(asset1Total - asset1Required),
-            asset: [encodeVaruint(block1!), encodeVaruint(txIndex1!)],
-            output: encodeVaruint(1)
+            amount: (asset1Total - asset1Required).toString(),
+            asset: [block1!, txIndex1!],
+            output: 1
           },
           {
-            amount: encodeVaruint(asset2Total - asset2Required),
-            asset: [encodeVaruint(block2!), encodeVaruint(txIndex2!)],
-            output: encodeVaruint(2)
+            amount: (asset2Total - asset2Required).toString(),
+            asset: [block2!, txIndex2!],
+            output: 2
           }
         ]
       }
@@ -139,16 +139,16 @@ class ContractDeployment {
   }
 
   async freeMint(ticker: string, divisibility: number, amountPerMint: string, supplyCap?: string) {
-    const _supplyCap = supplyCap ? encodeVaruint(supplyCap) : undefined;
+    const _supplyCap = supplyCap;
     const tx: OpReturnMessage = {
       contract_creation: {
         contract_type: {
           moa: {
             divisibility,
-            live_time: encodeVarint(0),
+            live_time: 0,
             supply_cap: _supplyCap,
-            ticker: encodeBase26(ticker),
-            mint_mechanism: { free_mint: { amount_per_mint: encodeVaruint(amountPerMint), supply_cap: _supplyCap } }
+            ticker: ticker,
+            mint_mechanism: { free_mint: { amount_per_mint: amountPerMint, supply_cap: _supplyCap } }
           }
         },
       },
@@ -174,15 +174,15 @@ class ContractDeployment {
   }
 
   async paidMint(ticker: string, divisibility: number, mechanism: PurchaseBurnSwap, supplyCap?: string) {
-    const _supplyCap = supplyCap ? encodeVaruint(supplyCap) : undefined;
+    const _supplyCap = supplyCap ? supplyCap : undefined;
     const tx: OpReturnMessage = {
       contract_creation: {
         contract_type: {
           moa: {
             divisibility,
-            live_time: encodeVarint(0),
+            live_time: 0,
             supply_cap: _supplyCap,
-            ticker: encodeBase26(ticker),
+            ticker: ticker,
             mint_mechanism: {
               purchase: {
                 input_asset: mechanism.input_asset,
@@ -229,10 +229,10 @@ class ContractCall {
     // TODO detect if the contract is paid mint or free mint
     const tx: OpReturnMessage = {
       contract_call: {
-        contract: [encodeVaruint(contractId.split(":")[0]!), encodeVaruint(contractId.split(":")[1]!)],
+        contract: [parseInt(contractId.split(":")[0]!), parseInt(contractId.split(":")[1]!)],
         call_type: {
           mint: {
-            pointer: encodeVaruint(1), // 0 is OpReturn
+            pointer: 1, // 0 is OpReturn
             oracle_message: oracleMessage,
           },
         },
@@ -275,14 +275,14 @@ export class GlittrTransaction {
   }
 
   async transfer(transfers: TransferParams[]): Promise<string> {
-    const allTransfers: {amount: Varuint, asset: BlockTxTuple, output: Varuint}[] = [];
+    const allTransfers: {amount: Varuint | string, asset: BlockTxTuple, output: Varuint | number}[] = [];
     const excessOutputs: {address: string, value: number}[] = [];
 
     transfers.forEach((t, i) => {
       allTransfers.push({
-        amount: encodeVaruint(t.amount),
-        asset: [encodeVaruint(t.contractId.split(":")[0]!), encodeVaruint(t.contractId.split(":")[1]!)],
-        output: encodeVaruint(i + 1), // 0 is OpReturn
+        amount: t.amount.toString(),
+        asset: [parseInt(t.contractId.split(":")[0]!), parseInt(t.contractId.split(":")[1]!)],
+        output: i + 1, // 0 is OpReturn
       });
     });
 
@@ -313,9 +313,9 @@ export class GlittrTransaction {
       if (excessAssetValue > 0) {
         // Add excess transfer to allTransfers array
         allTransfers.push({
-          asset: [encodeVaruint(transfer.contractId.split(":")[0]!), encodeVaruint(transfer.contractId.split(":")[1]!)],
-          amount: encodeVaruint(excessAssetValue),
-          output: encodeVaruint(transfers.length + excessOutputs.length + 1)
+          asset: [parseInt(transfer.contractId.split(":")[0]!), parseInt(transfer.contractId.split(":")[1]!)],
+          amount: excessAssetValue.toString(),
+          output: transfers.length + excessOutputs.length + 1
         });
         // Add excess asset output to sender
         excessOutputs.push({
@@ -332,7 +332,7 @@ export class GlittrTransaction {
     };
 
     const embed =
-    this.client.forceCompression || this.client.network == "regtest"
+    this.client.forceCompression || this.client.network != "regtest"
       ? await txBuilder.compress(tx)
       : txBuilder.compile(tx);
 
