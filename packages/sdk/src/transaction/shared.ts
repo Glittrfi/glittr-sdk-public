@@ -7,7 +7,7 @@ import {
   U128,
 } from "../utils";
 
-type VestingPlan =
+export type VestingPlan =
   | { timelock: RelativeOrAbsoluteBlockHeight }
   | { scheduled: Array<{ ratio: Varuint[], tolerance: number }> };
 

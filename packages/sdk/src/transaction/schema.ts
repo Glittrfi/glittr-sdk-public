@@ -113,7 +113,7 @@ export const schema: any = {
                                       { struct: { ordinal: { struct: {} } } }
                                     ]
                                   },
-                                  pay_to_key: { option: { array: { type: 'u8' } } },
+                                  pay_to_key: { option: { array: { type: 'u8', showLen: true } } },
                                   ratio: {
                                     enum: [
                                       {
@@ -259,7 +259,7 @@ export const schema: any = {
                                       { struct: { ordinal: { struct: {} } } }
                                     ]
                                   },
-                                  pay_to_key: { option: { array: { type: 'u8' } } },
+                                  pay_to_key: { option: { array: { type: 'u8', showLen: true } } },
                                   ratio: {
                                     enum: [
                                       {

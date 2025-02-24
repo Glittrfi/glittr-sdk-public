@@ -16,7 +16,7 @@ const NETWORK = "testnet";
 const client = new GlittrSDK({
   network: NETWORK,
   apiKey: "",
-  // glittrApi: "https://devnet2-core-api.glittr.fi", // devnet
+  // glittrApi: "https://devnet-core-api.glittr.fi", // devnet
   // electrumApi: "https://devnet-electrum.glittr.fi" // devnet
   glittrApi: "https://testnet-core-api.glittr.fi", // testnet
   electrumApi: "https://testnet-electrum.glittr.fi", // testnet

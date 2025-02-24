@@ -41,7 +41,6 @@ export async function fetchGET(url: string, headers: any) {
       return await resFetch.text();
     }
   } catch (e) {
-    console.error(e);
     throw new Error(`Error fetch GET`);
   }
 }

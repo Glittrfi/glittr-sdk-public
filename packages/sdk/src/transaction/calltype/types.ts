@@ -3,7 +3,7 @@ import { OutPoint, Fraction, U128, Pubkey, Varuint } from "../../utils";
 type AssertValues = {
   input_values?: Varuint[] | U128[]
   total_collateralized?: Varuint[] | U128[]
-  min_out_value?: Varuint[] | U128[]
+  min_out_value?: Varuint | U128
 }
 
 export type OracleMessage = {

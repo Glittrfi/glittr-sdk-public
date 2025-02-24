@@ -3,13 +3,13 @@ import { Account } from "../account/types";
 import { Network } from "../types";
 import { BitcoinUTXO, Output } from "../utxo";
 import { coinSelect } from "./coinselect";
-import { getBitcoinNetwork, validator } from "../utils";
+import { BlockTxTuple, getBitcoinNetwork, validator } from "../utils";
 import { getAddressType } from "../utils/address";
 import { AddressType } from "bitcoin-address-validation";
-import { encodeGlittrData } from "../utils/encode";
-import { fetchPOST } from "../utils/fetch";
+import { fetchGET, fetchPOST } from "../utils/fetch";
 import { electrumFetchTxHex } from "../utils/electrum";
 import { OpReturnMessage, txBuilder } from "../transaction";
+import { getStateKeysUtxos, getGlittrMessage, getAssetUtxos, getGlittrMessageByTxId, getContractState, getGlittrAsset } from "../helper";
 
 export type CreateTxParams = {
   address: string;
@@ -184,9 +184,9 @@ export class GlittrSDK {
     const addressType = getAddressType(account.address);
 
     const embed =
-    this.forceCompression || this.network != "regtest"
-      ? await txBuilder.compress(tx)
-      : txBuilder.compile(tx);
+      this.forceCompression || this.network != "regtest"
+        ? await txBuilder.compress(tx)
+        : txBuilder.compile(tx);
     outputs = [{ script: embed, value: 0 }, ...outputs];
 
     const psbt = new Psbt({ network: getBitcoinNetwork(this.network) });
@@ -459,5 +459,29 @@ export class GlittrSDK {
     }
 
     return psbt;
+  }
+
+  async getGlittrMessageByTxId(txid: string) {
+    return await getGlittrMessageByTxId(this, txid);
+  }
+
+  async getGlittrMessage(block: number, tx: number) {
+    return await getGlittrMessage(this, block, tx);
+  }
+
+  async getGlittrAsset(txid: string, vout: number) {
+    return await getGlittrAsset(this, txid, vout);
+  }
+
+  async getAssetUtxos(address: string, asset: string) {
+    return await getAssetUtxos(this, address, asset);
+  }
+
+  async getStateKeysUtxos(address: string, asset: string) {
+    return await getStateKeysUtxos(this, address, asset);
+  }
+
+  async getContractState(block: number, tx: number) {
+    return await getContractState(this, block, tx)
   }
 }
