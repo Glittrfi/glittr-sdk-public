@@ -1,4 +1,9 @@
-import { Fraction, RelativeOrAbsoluteBlockHeight, U128, Varuint } from "../../utils";
+import {
+  Fraction,
+  RelativeOrAbsoluteBlockHeight,
+  U128,
+  Varuint,
+} from "../../utils";
 import {
   Commitment,
   FreeMint,
@@ -10,7 +15,8 @@ import {
 } from "../shared";
 
 // MBA Mint Mechanism
-type RatioModel = "constant_product";
+// Updated RatioModel to support both constant_product and constant_sum
+type RatioModel = "constant_product" | "constant_sum";
 type ProportionalType = {
   ratio_model: RatioModel;
   inital_mint_pointer_to_key?: number;
@@ -52,13 +58,16 @@ export type SwapMechanism = {
 };
 
 export type MintBurnAssetContract = {
-  ticker?: {
-    number: Uint8Array;
-    spacers: Uint8Array;
-  } | {
-    number: Uint8Array;
-    spacers?: undefined;
-  } | string;
+  ticker?:
+    | {
+        number: Uint8Array;
+        spacers: Uint8Array;
+      }
+    | {
+        number: Uint8Array;
+        spacers?: undefined;
+      }
+    | string;
   supply_cap?: Varuint | U128;
   divisibility: number;
   live_time: RelativeOrAbsoluteBlockHeight;
@@ -66,5 +75,5 @@ export type MintBurnAssetContract = {
   mint_mechanism: MBAMintMechanism;
   burn_mechanism: BurnMechanism;
   swap_mechanism: SwapMechanism;
-  commitment?: Commitment
+  commitment?: Commitment;
 };
